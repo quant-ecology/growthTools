@@ -19,6 +19,3 @@ get.ep.lpc(light, mu, method = "mle2", ...)
 Note: this function currently does not use grid.mle2, as the regressions are usually pretty stable; add this 
 feature later.
 }
-\examples{
-
-}

@@ -4,6 +4,7 @@
 \alias{lagsat}
 \alias{lag}
 \alias{sat}
+\alias{satdecay}
 \alias{flr}
 \title{Equations for modeling abundace time series}
 \usage{
@@ -12,6 +13,8 @@ lagsat(x, a, b, B1, B2, s = 1e-10)
 lag(x, a, b, B1, s = 1e-10)
 
 sat(x, a, b, B2, s = 1e-10)
+
+satdecay(x, a, b, b2, B2, s = 1e-10)
 
 flr(x, a, b, B2, s = 1e-10)
 }
@@ -27,6 +30,8 @@ flr(x, a, b, B2, s = 1e-10)
 \item{B2}{Time point where abundance stops increasing (saturates)}
 
 \item{s}{Smoothing parameter; as this term -> 0, these continuous functions approach true piecewise equations}
+
+\item{b2}{slope of the decreasing linear portion of the time series (satdecay), must be <=0}
 }
 \value{
 Abundance at time x as a function of model parameters
@@ -52,13 +57,15 @@ possibility in future versions of this package.
 }
 \section{Functions}{
 \itemize{
-\item \code{lag}: Lagged increasing linear function
+\item \code{lag()}: Lagged increasing linear function
 
-\item \code{sat}: Saturating linear function
+\item \code{sat()}: Saturating linear function
 
-\item \code{flr}: Floored decreasing linear function
+\item \code{satdecay()}: Saturating then decaying linear functions
+
+\item \code{flr()}: Floored decreasing linear function
+
 }}
-
 \examples{
 
 curve(lag(x,5,1,4,s=1E-10),0,10,col='green',ylim=c(0,11),ylab='Abundance')

@@ -10,7 +10,7 @@ get.growth.rate(
   id,
   plot.best.Q = F,
   fpath = NA,
-  methods = c("linear", "lag", "sat", "flr", "lagsat"),
+  methods = c("linear", "lag", "sat", "flr", "lagsat", "satdecay"),
   model.selection = c("AICc"),
   min.exp.obs = 3,
   internal.r2.cutoff = 0,

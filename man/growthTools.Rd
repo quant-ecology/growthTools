@@ -2,6 +2,7 @@
 % Please edit documentation in R/growthTools.R
 \docType{package}
 \name{growthTools}
+\alias{growthTools-package}
 \alias{growthTools}
 \title{growthTools: A package for computing microbial growth rates and traits.}
 \description{
