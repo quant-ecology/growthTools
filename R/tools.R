@@ -336,6 +336,7 @@ get.gr.lagsat<-function(x,y,plotQ=F,fpath=NA,id=''){
   return(fit.lagsat)
 }
 
+
 #' Local Slope function
 #' 
 #' Helper function to calculate and extract the slope of a basic linear regression 
