@@ -478,7 +478,7 @@ detect<-function(x){
 #' res$best.slope
 #' 
 #' @export
-get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag','sat','flr','lagsat'),model.selection=c('AICc'),min.exp.obs=3,internal.r2.cutoff=0,verbose=FALSE,zero.time=TRUE){
+get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag','sat','flr','lagsat','satdecay'),model.selection=c('AICc'),min.exp.obs=3,internal.r2.cutoff=0,verbose=FALSE,zero.time=TRUE){
   
   # thin vectors if abundance measure is NA
   x<-x[!is.na(y)]
@@ -488,27 +488,27 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
     x <- x-min(x,na.rm = TRUE)
   }
   
-  if(sum(methods %in% c('linear','lag','sat','flr','lagsat'))==0){
+  if(sum(methods %in% c('linear','lag','sat','flr','lagsat','satdecay'))==0){
     print('Error! None of the specified methods matched a currently implemented approach')
   }
   
   if(verbose){print(paste('data set id = ',id))}
   
   # Initialize empty data structures
-  modlist<-list(gr=NA,gr.lag=NA,gr.sat=NA,gr.flr=NA,gr.lagsat=NA)
-  class(modlist$gr)<-class(modlist$gr.lag)<-class(modlist$gr.sat)<-class(modlist$gr.flr)<-class(modlist$gr.lagsat)<-'try-error'
-  gr<-gr.lag<-gr.sat<-gr.flr<-gr.lagsat<-NA
-  slope.gr<-slope.gr.lag<-slope.gr.sat<-slope.gr.flr<-slope.gr.lagsat<-NA
-  se.gr<-se.gr.lag<-se.gr.sat<-se.gr.flr<-se.gr.lagsat<-NA
+  modlist<-list(gr=NA,gr.lag=NA,gr.sat=NA,gr.flr=NA,gr.lagsat=NA,gr.satdecay=NA)
+  class(modlist$gr)<-class(modlist$gr.lag)<-class(modlist$gr.sat)<-class(modlist$gr.flr)<-class(modlist$gr.lagsat)<-class(modlist$gr.satdecay)<-'try-error'
+  gr<-gr.lag<-gr.sat<-gr.flr<-gr.lagsat<-gr.satdecay<-NA
+  slope.gr<-slope.gr.lag<-slope.gr.sat<-slope.gr.flr<-slope.gr.lagsat<-slope.gr.satdecay<-NA
+  se.gr<-se.gr.lag<-se.gr.sat<-se.gr.flr<-se.gr.lagsat<-se.gr.satdecay<-NA
   
-  slope.n.gr<-slope.n.gr.lag<-slope.n.gr.sat<-slope.n.gr.flr<-slope.n.gr.lagsat<-NA
-  slope.r2.gr<-slope.r2.gr.lag<-slope.r2.gr.sat<-slope.r2.gr.flr<-slope.r2.gr.lagsat<-NA
+  slope.n.gr<-slope.n.gr.lag<-slope.n.gr.sat<-slope.n.gr.flr<-slope.n.gr.lagsat<-slope.n.gr.satdecay<-NA
+  slope.r2.gr<-slope.r2.gr.lag<-slope.r2.gr.sat<-slope.r2.gr.flr<-slope.r2.gr.lagsat<-slope.r2.gr.satdecay<-NA
   
-  pre.n.gr<-pre.n.gr.lag<-pre.n.gr.sat<-pre.n.gr.flr<-pre.n.gr.lagsat<-NA
-  pre.r2.gr<-pre.r2.gr.lag<-pre.r2.gr.sat<-pre.r2.gr.flr<-pre.r2.gr.lagsat<-NA
+  pre.n.gr<-pre.n.gr.lag<-pre.n.gr.sat<-pre.n.gr.flr<-pre.n.gr.lagsat<-pre.n.gr.satdecay<-NA
+  pre.r2.gr<-pre.r2.gr.lag<-pre.r2.gr.sat<-pre.r2.gr.flr<-pre.r2.gr.lagsat<-pre.r2.gr.satdecay<-NA
   
-  post.n.gr<-post.n.gr.lag<-post.n.gr.sat<-post.n.gr.flr<-post.n.gr.lagsat<-NA
-  post.r2.gr<-post.r2.gr.lag<-post.r2.gr.sat<-post.r2.gr.flr<-post.r2.gr.lagsat<-NA
+  post.n.gr<-post.n.gr.lag<-post.n.gr.sat<-post.n.gr.flr<-post.n.gr.lagsat<-post.n.gr.satdecay<-NA
+  post.r2.gr<-post.r2.gr.lag<-post.r2.gr.sat<-post.r2.gr.flr<-post.r2.gr.lagsat<-post.r2.gr.satdecay<-NA
   
   if(length(unique(x))==2){
     print('Caution: only two unique time points, high risk of over-fitting. Methods other than "linear" are likely to fail')
@@ -575,6 +575,32 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
         }
       }
       modlist$gr.sat<-gr.sat
+    }
+    
+    if('satdecay' %in% methods){
+      gr.satdecay<-try(get.gr.satdecay(x,y))
+      if(prod(class(gr.satdecay)!='try-error')){
+        b2.cutoff <- coef(gr.satdecay)[1]+0.1  # where does exponential phase end?
+        pds.satdecay <- predict(gr.satdecay) # predicted values
+        obs.satdecay <- y # observed values 
+        
+        slope.gr.satdecay <- unname(coef(gr.satdecay)['b'])
+        se.gr.satdecay <- sqrt(diag(stats::vcov(gr.satdecay)))['b']
+        
+        slope.n.gr.satdecay <- length(x[x<=b2.cutoff])  # how many observations below cutoff
+        slope.r2.gr.satdecay <- get.R2(pds.satdecay[x<=b2.cutoff],obs.satdecay[x<=b2.cutoff])
+        
+        post.n.gr.satdecay <- length(x[x>=coef(gr.satdecay)['B2']])
+        post.r2.gr.satdecay <- get.R2(pds.satdecay[x>=coef(gr.satdecay)['B2']],obs.satdecay[x>=coef(gr.satdecay)['B2']])
+        
+        # if exponential portion is based on fewer than min.exp.obs observations, re-classify this fit as
+        # resulting in an error. This removes it from consideration as a 'best model', allowing
+        # a different model to succeed.
+        if(slope.n.gr.satdecay < min.exp.obs | (slope.n.gr.satdecay==min.exp.obs & slope.r2.gr.satdecay < internal.r2.cutoff)){
+          class(gr.satdecay)<-'try-error'          
+        }
+      }
+      modlist$gr.satdecay<-gr.satdecay
     }
     
     if('flr' %in% methods){
