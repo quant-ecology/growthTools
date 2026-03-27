@@ -673,16 +673,16 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
     }
     
     # assemble model names, contents, and slopes, but only for successful fits
-    mod.names<-c('gr','gr.lag','gr.sat','gr.flr','gr.lagsat')[successful.fits]
-    mod.list<-list(gr,gr.lag,gr.sat,gr.flr,gr.lagsat)[successful.fits]
-    slope.ests<-unname(c(slope.gr,slope.gr.lag,slope.gr.sat,slope.gr.flr,slope.gr.lagsat)[successful.fits])
-    se.ests<-unname(c(se.gr,se.gr.lag,se.gr.sat,se.gr.flr,se.gr.lagsat)[successful.fits])
-    slope.n.vals<-c(slope.n.gr,slope.n.gr.lag,slope.n.gr.sat,slope.n.gr.flr,slope.n.gr.lagsat)[successful.fits]
-    slope.r2.vals<-c(slope.r2.gr,slope.r2.gr.lag,slope.r2.gr.sat,slope.r2.gr.flr,slope.r2.gr.lagsat)[successful.fits]
-    pre.n.vals<-c(pre.n.gr,pre.n.gr.lag,pre.n.gr.sat,pre.n.gr.flr,pre.n.gr.lagsat)[successful.fits]
-    pre.r2.vals<-c(pre.r2.gr,pre.r2.gr.lag,pre.r2.gr.sat,pre.r2.gr.flr,pre.r2.gr.lagsat)[successful.fits]
-    post.n.vals<-c(post.n.gr,post.n.gr.lag,post.n.gr.sat,post.n.gr.flr,post.n.gr.lagsat)[successful.fits]
-    post.r2.vals<-c(post.r2.gr,post.r2.gr.lag,post.r2.gr.sat,post.r2.gr.flr,post.r2.gr.lagsat)[successful.fits]
+    mod.names<-c('gr','gr.lag','gr.sat','gr.flr','gr.lagsat','gr.satdecay')[successful.fits]
+    mod.list<-list(gr,gr.lag,gr.sat,gr.flr,gr.lagsat,gr.satdecay)[successful.fits]
+    slope.ests<-unname(c(slope.gr,slope.gr.lag,slope.gr.sat,slope.gr.flr,slope.gr.lagsat,slope.gr.satdecay)[successful.fits])
+    se.ests<-unname(c(se.gr,se.gr.lag,se.gr.sat,se.gr.flr,se.gr.lagsat,se.gr.satdecay)[successful.fits])
+    slope.n.vals<-c(slope.n.gr,slope.n.gr.lag,slope.n.gr.sat,slope.n.gr.flr,slope.n.gr.lagsat,slope.n.gr.satdecay)[successful.fits]
+    slope.r2.vals<-c(slope.r2.gr,slope.r2.gr.lag,slope.r2.gr.sat,slope.r2.gr.flr,slope.r2.gr.lagsat,slope.r2.gr.satdecay)[successful.fits]
+    pre.n.vals<-c(pre.n.gr,pre.n.gr.lag,pre.n.gr.sat,pre.n.gr.flr,pre.n.gr.lagsat,pre.n.gr.satdecay)[successful.fits]
+    pre.r2.vals<-c(pre.r2.gr,pre.r2.gr.lag,pre.r2.gr.sat,pre.r2.gr.flr,pre.r2.gr.lagsat,pre.r2.gr.satdecay)[successful.fits]
+    post.n.vals<-c(post.n.gr,post.n.gr.lag,post.n.gr.sat,post.n.gr.flr,post.n.gr.lagsat,post.n.gr.satdecay)[successful.fits]
+    post.r2.vals<-c(post.r2.gr,post.r2.gr.lag,post.r2.gr.sat,post.r2.gr.flr,post.r2.gr.lagsat,post.r2.gr.satdecay)[successful.fits]
     
     # compare successful models
     switch(model.selection,
@@ -722,7 +722,7 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
                  slope.ns=slope.n.vals,
                  slope.rs=slope.r2.vals,
                  ictab=ictab,
-                 models=list(gr=gr,gr.lag=gr.lag,gr.sat=gr.sat,gr.flr=gr.flr,gr.lagsat=gr.lagsat))
+                 models=list(gr=gr,gr.lag=gr.lag,gr.sat=gr.sat,gr.flr=gr.flr,gr.lagsat=gr.lagsat,gr.satdecay=gr.satdecay))
     #print(result)
     
     if(plot.best.Q){
@@ -737,7 +737,8 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
                    gr.lag=get.gr.lag(x,y,plotQ=TRUE,fpath=fpath,id=id[1]),
                    gr.sat=get.gr.sat(x,y,plotQ=TRUE,fpath=fpath,id=id[1]),
                    gr.flr=get.gr.flr(x,y,plotQ=TRUE,fpath=fpath,id=id[1]),
-                   gr.lagsat=get.gr.lagsat(x,y,plotQ=TRUE,fpath=fpath,id=id[1]))
+                   gr.lagsat=get.gr.lagsat(x,y,plotQ=TRUE,fpath=fpath,id=id[1]),
+                   gr.satdecay=get.gr.satdecay(x,y,plotQ=TRUE,fpath=fpath,id=id[1]))
     }
   }else{
     print("Warning: fewer than two unique time points provided")
@@ -757,7 +758,7 @@ get.growth.rate<-function(x,y,id,plot.best.Q=F,fpath=NA,methods=c('linear','lag'
                  ses=NA,
                  slope.ns=NA,
                  slope.rs=NA,
-                 models=list(gr=NA,gr.lag=NA,gr.sat=NA,gr.flr=NA,gr.lagsat=NA))
+                 models=list(gr=NA,gr.lag=NA,gr.sat=NA,gr.flr=NA,gr.lagsat=NA,gr.satdecay=NA))
   }
   
   return(result)
