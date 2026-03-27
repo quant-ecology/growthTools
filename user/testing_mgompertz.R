@@ -89,3 +89,18 @@ curve(mgomp(x,topt = 4.0574,d = 0.9228,b0 = 10.6542,A = 91.1532,umax = 20.5685,L
 
 # no, this umax growth rate is not interpretable as an exponential growth rate
 
+
+# try new fitting function:
+
+plot((value)~dtime,data=tmp1)
+
+localslope<-function (d) {
+  m <- stats::lm(y~x, as.data.frame(d))
+  return(coef(m)[2])
+}
+
+get.gr.satdecay(x=tmp1$dtime,y=log(tmp1$value),plotQ =T)
+
+
+
+

@@ -161,4 +161,14 @@ m.brm<-brm(bf(ln.N ~ Klog, Klog~1, nl = TRUE),
            control=list(adapt_delta=0.9))
 
 
-# Look at:
+###########################
+
+# Vision for a re-structured growth tools
+
+# - keep piecewise linear approximations, but add additional options
+# - incorporate explicit numerical ODE fitting
+#   * slower, but perhaps better in some cases where approx is poor?
+# - allow for Bayesian fitting of time series, not just nls
+#   * add detection threshold term
+
+
