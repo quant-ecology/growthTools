@@ -39,6 +39,7 @@ sqfunc<-function(x,b,s){
 #' @param x Time variable
 #' @param a Initial abundance at time = 0
 #' @param b slope of the increasing linear portion of the time series, must be >=0
+#' @param b2 slope of the decreasing linear portion of the time series (satdecay), must be <=0
 #' @param B1 Time point where abundance starts to increase (leaves lag phase)
 #' @param B2 Time point where abundance stops increasing (saturates)
 #' @param s Smoothing parameter; as this term -> 0, these continuous functions approach true piecewise equations
@@ -67,6 +68,12 @@ lag<-function(x,a,b,B1,s=1E-10){
 #' @export
 sat<-function(x,a,b,B2,s=1E-10){
   a + (1/2)*b*(B2) + sqfunc(-x,b,s) - sqfunc(B2-x,b,s)
+}
+
+#' @describeIn lagsat Saturating then decaying linear functions
+#' @export
+satdecay<-function(x,a,b,b2,B2,s=1E-10){
+  a + (1/2)*b*(B2) + sqfunc(-x,b,s) - sqfunc(B2-x,b,s) - (-b2/2)*(x-B2) - sqfunc(B2-x,-b2,s)
 }
 
 #' @describeIn lagsat Floored decreasing linear function
@@ -223,6 +230,71 @@ get.gr.sat<-function(x,y,plotQ=F,fpath=NA,id=''){
   }  
   
   return(fit.sat)
+}
+
+
+#' Extract exponential growth rate assuming exponential growth that saturates and 
+#' then decays
+#' 
+#' This function fits a smoothed piecewise linear model to ln(abundance) data, with 
+#' the assumption that abundances increase linearly at first, but then saturate and
+#' then abruptly decay linearly instead of remaining constant.
+#' 
+#' @param x Time steps
+#' @param y ln(abundance)
+#' @param plotQ logical; should the fit be plotted?
+#' @param fpath character; path specifying where plot should be saved, if generated
+#' @param id Label corresponding to the population/strain/species of interest
+#' 
+#' @return This function returns a nonlinear least-squares regression model
+#' 
+#' @export
+#' @importFrom minpack.lm nlsLM nls.lm.control
+get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
+  
+  data<-data.frame(x=x,y=y)
+  slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)
+  a.guess<-coef(stats::lm(y~x))[[1]]
+  
+  fit.satdecay<-try(nlsLM(y ~ satdecay(x,a,b,b2,B2,s=1E-10),
+                     start=c(B2=mean(x)+(max(x)-mean(x))/2,a=a.guess,
+                             b=round(max(c(slopes,0.0001)),5),
+                             b2=round(min(c(slopes,-0.0001)),5)),
+                     data = data,
+                     lower = c(B2=-Inf,a=-Inf,b=0.0001,b2=-Inf), # do we want to constrain b2?
+                     control = nls.lm.control(maxiter=1000,maxfev=1000)),silent=TRUE)
+  if(class(fit.satdecay)=='try-error'){
+    fit.satdecay<-try(nlsLM(y ~ satdecay(x,a,b,b2,B2,s=1E-10),
+                       start=c(B2=10,a=a.guess,b=round(max(c(slopes,0.0001)),5),
+                               b2=round(min(c(slopes,-0.0001)),5)),
+                       data = data,
+                       lower = c(B2=-Inf,a=-Inf,b=0.0001,b2=-Inf),
+                       control = nls.lm.control(maxiter=1000,maxfev=1000)),silent=TRUE)
+  }
+  if(class(fit.satdecay)=='try-error'){
+    if(!grepl(attr(fit.satdecay,"condition"),pattern='singular gradient matrix')){
+      print(attr(fit.satdecay,"condition"))
+    }
+    #print('fit.satdecay failed after two tries')
+  }else{
+    cfs<-data.frame(t(coef(fit.satdecay)))
+    
+    if(plotQ){
+      if(!is.na(fpath)){
+        grDevices::pdf(fpath)
+        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
+        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
+        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
+        grDevices::dev.off()
+      }else{
+        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
+        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
+        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
+      }
+    }
+  }  
+  
+  return(fit.satdecay)
 }
 
 #' Extract exponential growth rate assuming exponential death that hits a floor
