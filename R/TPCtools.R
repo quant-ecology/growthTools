@@ -247,6 +247,12 @@ get.nbcurve.tpc<-function(temperature,mu,method='grid.mle2',grids=NA,start=NA,su
   st.umax<-paste("nbcurve(c(",paste(cf$topt,collapse=','),"),topt,w,a,b)",sep='')
   dvs0.umax<-suppressWarnings(deltavar2(fun=parse(text=st.umax),meanval=cf,Sigma=vcov.mat))
   
+  # calculate variance for tmin estimate using delta method:
+  var.tmin<-deltavar(fun=(2+2*b*topt-b*w-sqrt(4+b^2*w^2))/(2*b),meanval=cf,Sigma=vcov.mat)
+  
+  # calculate variance for tmax estimate using delta method:
+  var.tmax<-deltavar(fun=(2+2*b*topt+b*w-sqrt(4+b^2*w^2))/(2*b),meanval=cf,Sigma=vcov.mat)
+  
   # simple Fisher confidence intervals:
   ciF<-mleTools::ci.FI(fit)
   
@@ -267,9 +273,9 @@ get.nbcurve.tpc<-function(temperature,mu,method='grid.mle2',grids=NA,start=NA,su
   vec$topt<-cf$topt
   vec$topt_ci<-ciF[1,1:2]
   vec$tmin<-tmin
-  #vec$tmin_ci<-
+  vec$tmin_ci<-vec$tmin+c(-1,1)*1.96*sqrt(var.tmin)
   vec$tmax<-tmax
-  #vec$tmax_ci<-
+  vec$tmax_ci<-vec$tmax+c(-1,1)*1.96*sqrt(var.tmax)
   
   vec$rsqr<-rsqr
   vec$nobs<-nrow(tpc.tmp)
