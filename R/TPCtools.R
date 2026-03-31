@@ -270,13 +270,13 @@ get.nbcurve.tpc<-function(temperature,mu,method='grid.mle2',grids=NA,start=NA,su
   
   vec$umax<-pd.umax
   vec$umax_ci<-pd.umax+c(-1,1)*1.96*sqrt(dvs0.umax)
-  names(vec$umax_ci)<-c('2.5 %','97.5 %')
   vec$topt<-cf$topt
   vec$topt_ci<-ciF[1,1:2]
   vec$tmin<-tmin
   vec$tmin_ci<-vec$tmin+c(-1,1)*1.96*sqrt(var.tmin)
   vec$tmax<-tmax
   vec$tmax_ci<-vec$tmax+c(-1,1)*1.96*sqrt(var.tmax)
+  names(vec$umax_ci)<-names(vec$tmin_ci)<-names(vec$tmax_ci)<-c('2.5 %','97.5 %')
   
   vec$rsqr<-rsqr
   vec$nobs<-nrow(tpc.tmp)
