@@ -254,10 +254,15 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
   
   data<-data.frame(x=x,y=y)
   slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)
-  a.guess<-coef(stats::lm(y~x))[[1]]
+  
+  #a.guess <- coef(stats::lm(y ~ x))[[1]]
+  a.guess <- mean(y[1:2])
+  
+  #B2.guess<-mean(x) + (max(x) - mean(x))/2
+  B2.guess<-x[which(y==max(y)[1])]
   
   fit.satdecay<-try(nlsLM(y ~ satdecay(x,a,b,b2,B2,s=1E-10),
-                     start=c(B2=mean(x)+(max(x)-mean(x))/2,a=a.guess,
+                     start=c(B2=B2.guess,a=a.guess,
                              b=round(max(c(slopes,0.0001)),5),
                              b2=round(min(c(slopes,-0.0001)),5)),
                      data = data,
