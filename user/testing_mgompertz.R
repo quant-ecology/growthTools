@@ -1,6 +1,6 @@
 
 library(ggplot2)
-
+library(dplyr)
 
 mgomp<-function(t,topt,d,b0,A,umax,L){
   denom <- (topt^(2))^d
@@ -26,81 +26,79 @@ curve(log(mgomp(x,8.19,3.19,31,126.5,95.8,1.31)),0,20)
 dat<-read.csv("./user/Chan_time_series.csv")
 head(dat)
 
-plot(value~dtime,data=dat[dat$temperature==12 & dat$bacteria==0,])
-
-plot(log(value)~dtime,data=dat[dat$temperature==12 & dat$bacteria==0 & dat$B12==0,])
-
+# subset
 tmp<-dat[dat$temperature==12 & dat$bacteria==0 & dat$B12==0,]
-
-tmp
-
-
+tmp$ln.fluor<-log(tmp$value)
+head(tmp)
 
 ggplot(tmp,aes(x=dtime,y=(value)))+
   geom_point()+
   facet_wrap(~rep)
 
-ggplot(tmp,aes(x=dtime,y=log(value)))+
+tmp %>% filter(dtime>0.1) %>%
+ggplot(aes(x=dtime,y=log(value)))+
   geom_point()+
   facet_wrap(~rep)
 
-# rep 14 looks pretty good, also 5
+## Try out new method
 
-tmp1 <- tmp[tmp$rep==14,]
-tmp1 <- tmp1[tmp1$dtime>0,]
-
-plot(log(value)~dtime,data=tmp1,xlim=c(0,15),ylim=c(1.5,4))
-
-curve(log(mgomp(x,topt = 5.2,d = 1.3,b0 = exp(1.8),A = 126.5,umax = 15,L = 1.8)),0,20,add=T)
-
-x<-tmp1$dtime
-y<-log(tmp1$value)
-data<-data.frame(x=x,y=y)
-
-library(minpack.lm)
-
-fit.mgomp<-try(nlsLM(y ~ log(mgomp(x,topt,d,b0,A,umax,L)),
-                   start=c(topt = 5.2,d = 1.3,b0 = exp(1.8),A = 126.5,umax = 15,L = 1.8),
-                   data = data,
-                   #lower = c(B2=-Inf,a=-Inf,b=0.0001),
-                   control = nls.lm.control(maxiter=1000,maxfev=1000)),silent=TRUE)
-
-summary(fit.mgomp)
+# all methods
+gdat <- tmp %>% filter(dtime>0.1) %>% group_by(rep) %>% do(grs=get.growth.rate(.$dtime,.$ln.fluor,.$id,plot.best.Q=T,fpath=NA))
+res1<-gdat %>% summarise(rep,mu=grs$best.slope,best.model=grs$best.model,r2=grs$best.model.slope.r2)
+res1
+# looks like satdecay was pretty commonly best model
 
 
-plot(log(value)~dtime,data=tmp1,xlim=c(0,15),ylim=c(1.5,4))
+# everything but satdecay
+gdat2 <- tmp %>% filter(dtime>0.1) %>% group_by(rep) %>% do(grs=get.growth.rate(.$dtime,.$ln.fluor,.$id,plot.best.Q=T,fpath=NA,methods = c("linear", "lag", "sat", "flr", "lagsat")))
+res2<-gdat2 %>% summarise(rep,mu=grs$best.slope,best.model=grs$best.model,r2=grs$best.model.slope.r2)
+res2
 
-curve(log(mgomp(x,topt = 5.2,d = 1.3,b0 = exp(1.8),A = 126.5,umax = 15,L = 1.8)),0,20,add=T)
-curve(log(mgomp(x,topt = 2.68576,d = 0.99676,b0 = 6.21149,A = 537.63323,umax = 24.64616,L = 4.16433)),0,20,col='red',add=T)
+# looks like satdecay was pretty commonly best model
 
-# ok, so the fit fits... is the result interpretable? especially the growth rate... 
+# compare results
+res1$method<-"all"
+res2$method<-"no.satdecay"
+
+res<-rbind(res1,res2)
+head(res)
+
+library(reshape2)
+
+# compare growth rate estimates
+bob<-dcast(res,rep~method,value.var='mu')
+ggplot(bob,aes(x=no.satdecay,y=all))+
+  geom_point()+
+  geom_abline()
+
+# compare R2
+bob<-dcast(res,rep~method,value.var='r2')
+ggplot(bob,aes(x=no.satdecay,y=all))+
+  geom_point()+
+  geom_abline()
 
 
-fit.mgomp2<-try(nlsLM(exp(y) ~ mgomp(x,topt,d,b0,A,umax,L),
-                     start=c(topt = 5.2,d = 1.3,b0 = exp(1.8),A = 126.5,umax = 15,L = 1.8),
-                     data = data,
-                     #lower = c(B2=-Inf,a=-Inf,b=0.0001),
-                     control = nls.lm.control(maxiter=1000,maxfev=1000)),silent=TRUE)
+# extract extra traits for sat decay model:
 
-summary(fit.mgomp2)
-
-plot((value)~dtime,data=tmp1)
-curve(mgomp(x,topt = 4.0574,d = 0.9228,b0 = 10.6542,A = 91.1532,umax = 20.5685,L = 2.2613),0,20,col='blue',add=T)
-
-# no, this umax growth rate is not interpretable as an exponential growth rate
-
-
-# try new fitting function:
-
-plot((value)~dtime,data=tmp1)
-
-localslope<-function (d) {
-  m <- stats::lm(y~x, as.data.frame(d))
-  return(coef(m)[2])
+get.satdecay.pars<-function(x){
+  cfs<-coef(x$models$gr.satdecay)
 }
 
-get.gr.satdecay(x=tmp1$dtime,y=log(tmp1$value),plotQ =T)
+trlist<-lapply(gdat$grs,FUN = get.satdecay.pars)
 
+satdecay.pars<-data.frame(do.call(rbind, trlist))
+
+# b is the increasing growth rate:
+satdecay.pars$b
+
+# b2 is the decreasing growth rate:
+satdecay.pars$b2
+
+# B2 is the break point (time when direction of growth changes):
+satdecay.pars$B2
+
+# peak abundances
+satdecay.pars$a + satdecay.pars$b*satdecay.pars$B2
 
 
 
