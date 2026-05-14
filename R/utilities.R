@@ -94,16 +94,14 @@ fd2.central<-function(fx,h){
 }
 
 
-#' Start assuming Julia is not initialized
-.julia_initialized <- FALSE
-
 #' Make sure Julia is available if calling a function that needs it
 #' 
 ensure_julia <- function() {
   
-  if (!.julia_initialized) {
-    JuliaCall::julia_setup(installJulia = FALSE) #quiet = TRUE
-    .julia_initialized <<- TRUE
+  if (!requireNamespace("JuliaCall", quietly = TRUE)) {
+    stop("JuliaCall not installed")
   }
+  
+  JuliaCall::julia_setup(installJulia = FALSE) # quiet = TRUE
 }
 
