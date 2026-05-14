@@ -2,9 +2,24 @@
 % Please edit documentation in R/tools_S3.R
 \name{linear_model}
 \alias{linear_model}
+\alias{lag_model}
+\alias{sat_model}
+\alias{flr_model}
+\alias{lagsat_model}
+\alias{satdecay_model}
 \title{Defining growth model classes}
 \usage{
 linear_model()
+
+lag_model()
+
+sat_model()
+
+flr_model()
+
+lagsat_model()
+
+satdecay_model()
 }
 \description{
 Each growth model exists as both a 'growth_model' object and carries a specific

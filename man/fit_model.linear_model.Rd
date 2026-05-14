@@ -2,9 +2,24 @@
 % Please edit documentation in R/tools_S3.R
 \name{fit_model.linear_model}
 \alias{fit_model.linear_model}
+\alias{fit_model.lag_model}
+\alias{fit_model.sat_model}
+\alias{fit_model.flr_model}
+\alias{fit_model.lagsat_model}
+\alias{fit_model.satdecay_model}
 \title{Fitting methods for growth models}
 \usage{
 \method{fit_model}{linear_model}(model, x, y, ...)
+
+\method{fit_model}{lag_model}(model, x, y, ...)
+
+\method{fit_model}{sat_model}(model, x, y, ...)
+
+\method{fit_model}{flr_model}(model, x, y, ...)
+
+\method{fit_model}{lagsat_model}(model, x, y, ...)
+
+\method{fit_model}{satdecay_model}(model, x, y, ...)
 }
 \arguments{
 \item{model}{Growth model type}

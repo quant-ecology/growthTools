@@ -40,16 +40,3 @@ fit in different portions of the model (e.g., initial exponential phase vs.
 after saturating). Input follows a common structure, but internals vary by 
 model type.
 }
-\section{Functions}{
-\itemize{
-\item \code{evaluate_model(lag_model)}: 
-
-\item \code{evaluate_model(sat_model)}: 
-
-\item \code{evaluate_model(flr_model)}: 
-
-\item \code{evaluate_model(satdecay_model)}: 
-
-\item \code{evaluate_model(lagsat_model)}: 
-
-}}

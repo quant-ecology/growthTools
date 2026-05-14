@@ -19,10 +19,14 @@ fit_model <- function(model, x, y, ...) {
   UseMethod("fit_model")
 }
 
+#' @rdname fit_model
+#' @export
 evaluate_model <- function(model, fit, x, y, ...) {
   UseMethod("evaluate_model")
 }
 
+#' @rdname fit_model
+#' @export
 plot_model <- function(model, fit, x, y, ...) {
   UseMethod("plot_model")
 }
@@ -42,7 +46,7 @@ linear_model <- function() {
   )
 }
 
-#' @describeIn linear_model
+#' @rdname linear_model
 #' @export
 lag_model <- function() {
   structure(
@@ -51,7 +55,7 @@ lag_model <- function() {
   )
 }
 
-#' @describeIn linear_model
+#' @rdname linear_model
 #' @export
 sat_model <- function() {
   structure(
@@ -60,7 +64,7 @@ sat_model <- function() {
   )
 }
 
-#' @describeIn linear_model
+#' @rdname linear_model
 #' @export
 flr_model <- function() {
   structure(
@@ -69,7 +73,7 @@ flr_model <- function() {
   )
 }
 
-#' @describeIn linear_model
+#' @rdname linear_model
 #' @export
 lagsat_model <- function() {
   structure(
@@ -78,7 +82,7 @@ lagsat_model <- function() {
   )
 }
 
-#' @describeIn linear_model
+#' @rdname linear_model
 #' @export
 satdecay_model <- function() {
   structure(
@@ -107,31 +111,31 @@ fit_model.linear_model <- function(model, x, y, ...) {
   get.gr.linear(x, y, ...)
 }
 
-#' @describeIn fit_model.linear_model
+#' @rdname fit_model.linear_model
 #' @export
 fit_model.lag_model <- function(model, x, y, ...) {
   get.gr.lag(x, y, ...)
 }
 
-#' @describeIn fit_model.linear_model
+#' @rdname fit_model.linear_model
 #' @export
 fit_model.sat_model <- function(model, x, y, ...) {
   get.gr.sat(x, y, ...)
 }
 
-#' @describeIn fit_model.linear_model
+#' @rdname fit_model.linear_model
 #' @export
 fit_model.flr_model <- function(model, x, y, ...) {
   get.gr.flr(x, y, ...)
 }
 
-#' @describeIn fit_model.linear_model
+#' @rdname fit_model.linear_model
 #' @export
 fit_model.lagsat_model <- function(model, x, y, ...) {
   get.gr.lagsat(x, y, ...)
 }
 
-#' @describeIn fit_model.linear_model
+#' @rdname fit_model.linear_model
 #' @export
 fit_model.satdecay_model <- function(model, x, y, ...) {
   get.gr.satdecay(x, y, ...)
@@ -170,7 +174,7 @@ evaluate_model.linear_model <- function(model, fit, x, y, ...) {
   )
 }
 
-#' @describeIn evaluate_model.linear_model 
+#' @rdname evaluate_model.linear_model 
 #' @export
 evaluate_model.lag_model <- function(model, fit, x, y, ...) {
   
@@ -193,7 +197,7 @@ evaluate_model.lag_model <- function(model, fit, x, y, ...) {
   )
 }
 
-#' @describeIn evaluate_model.linear_model 
+#' @rdname evaluate_model.linear_model 
 #' @export
 evaluate_model.sat_model <- function(model, fit, x, y, ...) {
   
@@ -216,7 +220,7 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
   )
 }
 
-#' @describeIn evaluate_model.linear_model 
+#' @rdname evaluate_model.linear_model 
 #' @export
 evaluate_model.flr_model <- function(model, fit, x, y, ...) {
   
@@ -239,7 +243,7 @@ evaluate_model.flr_model <- function(model, fit, x, y, ...) {
   )
 }
 
-#' @describeIn evaluate_model.linear_model 
+#' @rdname evaluate_model.linear_model 
 #' @export
 evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
   
@@ -262,7 +266,7 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
   )
 }
 
-#' @describeIn evaluate_model.linear_model 
+#' @rdname evaluate_model.linear_model 
 #' @export
 evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
   
@@ -432,8 +436,16 @@ summary.growth_rate_result <- function(object, ...) {
 }
 
 
-#' What does this Do?
+#' Empty growth model construction
 #' 
+#' Given the (character string) name of a model, generate a model specification
+#' object, e.g. "linear" becomes "linear_model()", the infrastructure for holding
+#' a model of this type. This empty infrastructure is later populated when we
+#' actually ask R to fit this model using the fit_model() command.
+#' 
+#' @param name Name of a growth model type
+#' 
+#' @export
 make_model <- function(name) {
   
   switch(

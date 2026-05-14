@@ -2,9 +2,15 @@
 % Please edit documentation in R/tools_S3.R
 \name{fit_model}
 \alias{fit_model}
+\alias{evaluate_model}
+\alias{plot_model}
 \title{Defining generics for fitting, evaluating, plotting}
 \usage{
 fit_model(model, x, y, ...)
+
+evaluate_model(model, fit, x, y, ...)
+
+plot_model(model, fit, x, y, ...)
 }
 \arguments{
 \item{model}{Growth model type}
