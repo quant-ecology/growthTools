@@ -4,7 +4,7 @@
 \alias{glance.growth_rate_result}
 \title{Glance method for suite of successful growth rate results}
 \usage{
-glance.growth_rate_result(object, ...)
+\method{glance}{growth_rate_result}(object, ...)
 }
 \arguments{
 \item{object}{Object of class growth_rate_result}

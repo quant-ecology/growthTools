@@ -10,7 +10,8 @@ License: MIT + file LICENSE
 LazyData: TRUE
 RoxygenNote: 7.3.3
 Encoding: UTF-8
-Imports: bbmle,
+Imports: 
+    bbmle,
     devtools,
     emdbook,
     ggplot2,
@@ -27,7 +28,8 @@ Imports: bbmle,
     tidyr,
     tibble,
     vegan,
-    zoo
+    zoo,
+    generics
 Suggests: 
     knitr,
     rmarkdown,

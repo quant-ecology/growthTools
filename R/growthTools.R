@@ -11,6 +11,7 @@
 #' @import methods
 #' @importClassesFrom bbmle mle2
 #' @importMethodsFrom bbmle coef predict vcov logLik
+#' @importFrom generics glance tidy augment
 NULL
 
 #' define as a package (replaces former '@docType package')
