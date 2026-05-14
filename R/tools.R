@@ -302,6 +302,142 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
   return(fit.satdecay)
 }
 
+
+#' Extract exponential growth rate assuming exponential growth that saturates and 
+#' then decays using full ODE fitting
+#' 
+#' This function fits ODE model to ln(abundance) data, with 
+#' the assumption that abundances increase linearly at first, as resource is 
+#' depleted in the background. If resources are perfectly recycled into the 
+#' resource pool, abundances will saturate. But, imperfect recycling leads to
+#' subsequent decay in abundance as cells die, and recalcitrant nutrients 
+#' accumulate. Under particular circumstances, this dynamic is well approximated
+#' by a piecewise linear function; see get.gr.satdecay(). Currently, this 
+#' functionality only works if R is connected to Julia, which provides fast
+#' ODE solutions
+#' 
+#' @param x Time steps
+#' @param y ln(abundance)
+#' @param plotQ logical; should the fit be plotted?
+#' @param fpath character; path specifying where plot should be saved, if generated
+#' @param id Label corresponding to the population/strain/species of interest
+#' 
+#' @return This function returns an mle2 regression model
+#' 
+#' @export
+#' @importFrom minpack.lm nlsLM nls.lm.control
+get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
+  data<-data.frame(x=x,y=y)
+  
+  if(length(unique(x))<4){
+    print("error: fewer than four distinct time steps provided to get.gr.satdecay.ode")
+    break;
+  }
+  
+  ## Formulate starting guesses:
+  
+  # initial slope should be ~= vmax*(1-d)
+  fit_early <- lm(y[1:3] ~ x[1:3]) 
+  slope0 <- coef(fit_early)[2]
+  
+  # final slope should be ~= -vmax*d
+  fit_late <- lm(y[(length(x)-2):length(x)] ~ x[(length(x)-2):length(x)])
+  slope_end <- coef(fit_late)[2]
+  
+  vmax.guess <- slope0 - slope_end
+  d.guess    <- -slope_end / vmax.guess
+  n0.guess <- y[x==min(x)[1]]
+  c.guess <- 0.2
+  alpha.guess <- 0.1 * vmax.guess # careful with this one; linked to r0 assumption
+  
+  # precompile solver: (is this necessary/helpful?)
+  julia_eval("prob = remake(prob_template); solve(prob, Tsit5(), saveat=times_obs)")
+  
+  # set up for likelihood calculation:
+  julia_assign("times_obs", x)
+  julia_assign("tmax_global", max(max(x), 10))
+  
+  # local version of satdecay.ode(), to optimize run time. Uses fixed time vals
+  satdecay.ode.local <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
+    # define time range
+    tmax <- max(max(x), 10)
+    
+    julia_assign("p_new", c(alpha, vmax, cpar, dpar))
+    julia_assign("u0_new", c(r0, n0))
+    
+    # below only works if x is more than one value
+    vals <- julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax_global)); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
+    
+    return(vals)
+  }
+  
+  negloglik <- function(log_alpha, log_vmax, theta_c,log_d, n0, log_sigma){
+    
+    alpha <- exp(log_alpha)
+    vmax  <- exp(log_vmax)
+    cpar  <- 1 / (1 + exp(-theta_c))
+    dpar  <- exp(log_d)
+    sigma <- exp(log_sigma)
+    r0 <- 10 # fixed arbitrarily
+    
+    nvals <- satdecay.ode.local(x, alpha, vmax, cpar, dpar, r0, n0)
+    
+    if (any(!is.finite(nvals))) return(Inf)
+    
+    -sum(dnorm(y, mean = nvals, sd = sigma, log = TRUE))
+  }
+  
+  # try first fit
+  fit.satdecay.ode <- try(mle2(
+    negloglik,
+    start = list(
+      log_alpha = log(alpha.guess),
+      log_vmax  = log(vmax.guess),
+      theta_c   = qlogis(0.2),
+      log_d     = log(d.guess),
+      n0   = n0.guess,
+      log_sigma = log(0.1)
+    ),
+    method = "Nelder-Mead",
+    control=list(maxit=10000),
+    data=data
+  ),silent=TRUE)
+  if(class(fit.satdecay.ode)=='try-error'){
+    print("first attempt at fit failed in get.gr.satdecay.ode") 
+    #try again with different settings?
+  }
+  if(class(fit.satdecay.ode)=='try-error'){ # failed again
+    if(!grepl(attr(fit.satdecay.ode,"condition"),pattern='singular gradient matrix')){
+      print(attr(fit.satdecay.ode,"condition"))
+    }
+    #print('fit.satdecay.ode failed after two tries')
+  }else{ # can generate plot
+    
+    # back transform coefficients
+    tcoef<-function(cfs){
+      vec<-c(exp(cfs[1]),exp(cfs[2]),1 / (1 + exp(-cfs[3])),exp(cfs[4]),cfs[5],exp(cfs[6]))
+      names(vec)<-c('alpha','vmax','c','d','n0','sigma')
+      vec
+    }
+    cfs<-data.frame(t(tcoef(coef(fit.satdecay.ode))))
+    
+    if(plotQ){
+      if(!is.na(fpath)){
+        grDevices::pdf(fpath)
+        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
+        graphics::curve(satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0),min(x),max(x),add=TRUE,col='blue')
+        grDevices::dev.off()
+      }else{
+        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
+        graphics::curve(satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0),min(x),max(x),add=TRUE,col='blue')
+      }
+    }
+  }
+  
+  return(fit.satdecay.ode)
+}
+
+
 #' Extract exponential growth rate assuming exponential death that hits a floor
 #' 
 #' This function fits a smoothed piecewise linear model to ln(abundance) data, with 
