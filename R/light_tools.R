@@ -209,7 +209,7 @@ plot.lpc<-function(x,plot_ci=TRUE,plot_obs=TRUE,xlim=NULL,ylim=NULL,main=NA,fpat
 #' @param method Specify which fitting algorithm to use, 'mle2' or 'grid.mle2'
 #' @param ... Additional arguments passed to grid.mle2 (e.g., control=list(maxit=2000))
 #' 
-#' @examples 
+#' @examples (write some)
 #' 
 #' @export
 #' @import emdbook
