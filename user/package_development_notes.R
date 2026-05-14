@@ -14,6 +14,7 @@
 
 # devtools::build_vignettes()
 
+# devtools::document()
 
 # To merge master and develop branch:
 # - in terminal, run: git merge develop
