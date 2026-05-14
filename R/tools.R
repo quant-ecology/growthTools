@@ -97,7 +97,7 @@ flr<-function(x,a,b,B2,s=1E-10){
 #' @return This function returns a linear model regressing ln(abundance) on time
 #' 
 #' @export
-get.gr<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.linear<-function(x,y,plotQ=F,fpath=NA,id=''){
   lm1<-stats::lm(y~x)
   
   if(plotQ){

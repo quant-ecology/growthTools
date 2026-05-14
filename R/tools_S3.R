@@ -104,7 +104,7 @@ satdecay_model <- function() {
 #' 
 #' @export
 fit_model.linear_model <- function(model, x, y, ...) {
-  get.gr(x, y, ...)
+  get.gr.linear(x, y, ...)
 }
 
 #' @describeIn fit_model.linear_model
