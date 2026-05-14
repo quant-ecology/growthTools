@@ -102,7 +102,7 @@ fd2.central<-function(fx,h){
 ensure_julia <- function() {
   
   if (!.julia_initialized) {
-    JuliaCall::julia_setup(installJulia = FALSE, quiet = TRUE)
+    JuliaCall::julia_setup(installJulia = FALSE) #quiet = TRUE
     .julia_initialized <<- TRUE
   }
 }
