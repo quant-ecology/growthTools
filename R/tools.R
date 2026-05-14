@@ -350,12 +350,12 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
   c.guess <- 0.2
   alpha.guess <- 0.1 * vmax.guess # careful with this one; linked to r0 assumption
   
-  # precompile solver: (is this necessary/helpful?)
-  JuliaCall::julia_eval("prob = remake(prob_template); solve(prob, Tsit5(), saveat=times_obs)")
-  
   # set up for likelihood calculation:
   JuliaCall::julia_assign("times_obs", x)
   JuliaCall::julia_assign("tmax_global", max(max(x), 10))
+
+  # precompile solver: (is this necessary/helpful?)
+  JuliaCall::julia_eval("prob = remake(prob_template); solve(prob, Tsit5(), saveat=times_obs)")
   
   # local version of satdecay.ode(), to optimize run time. Uses fixed time vals
   satdecay.ode.local <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
