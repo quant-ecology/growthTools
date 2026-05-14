@@ -56,6 +56,12 @@ fit_model.satdecay_model <- function(model, x, y, ...) {
   get.gr.satdecay(x, y, ...)
 }
 
+#' @rdname fit_model
+#' @export
+fit_model.satdecay_ode_model <- function(model, x, y, ...) {
+  get.gr.satdecay.ode(x, y, ...)
+}
+
 
 
 #' Evaluation methods for growth models
@@ -190,6 +196,30 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
 
 #' @rdname evaluate_model
 #' @export
+evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+
+#' @rdname evaluate_model
+#' @export
 evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
   
   preds <- predict(fit)
@@ -291,7 +321,14 @@ satdecay_model <- function() {
   )
 }
 
-
+#' @rdname linear_model
+#' @export
+satdecay_ode_model <- function() {
+  structure(
+    list(name = "satdecayode"),
+    class = c("satdecay_ode_model", "growth_model")
+  )
+}
 
 
 
@@ -496,6 +533,7 @@ make_model <- function(name) {
     flr = flr_model(),
     lagsat = lagsat_model(),
     satdecay = satdecay_model(),
+    satdecayode = satdecay_ode_model(),
     
     stop(paste("Unknown model:", name))
   )

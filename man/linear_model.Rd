@@ -7,6 +7,7 @@
 \alias{flr_model}
 \alias{lagsat_model}
 \alias{satdecay_model}
+\alias{satdecay_ode_model}
 \title{Defining growth model classes}
 \usage{
 linear_model()
@@ -20,6 +21,8 @@ flr_model()
 lagsat_model()
 
 satdecay_model()
+
+satdecay_ode_model()
 }
 \description{
 Each growth model exists as both a 'growth_model' object and carries a specific

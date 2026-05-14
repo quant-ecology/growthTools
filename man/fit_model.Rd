@@ -8,6 +8,7 @@
 \alias{fit_model.flr_model}
 \alias{fit_model.lagsat_model}
 \alias{fit_model.satdecay_model}
+\alias{fit_model.satdecay_ode_model}
 \title{Fitting methods for growth models}
 \usage{
 fit_model(model, x, y, ...)
@@ -23,6 +24,8 @@ fit_model(model, x, y, ...)
 \method{fit_model}{lagsat_model}(model, x, y, ...)
 
 \method{fit_model}{satdecay_model}(model, x, y, ...)
+
+\method{fit_model}{satdecay_ode_model}(model, x, y, ...)
 }
 \arguments{
 \item{model}{Growth model type}
