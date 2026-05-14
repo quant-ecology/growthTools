@@ -92,3 +92,18 @@ deltavar2<-function (fun, meanval = NULL, vars, Sigma, verbose = FALSE)
 fd2.central<-function(fx,h){
   (fx[3]-2*fx[2]+fx[1])/(h^2)
 }
+
+
+#' Start assuming Julia is not initialized
+.julia_initialized <- FALSE
+
+#' Make sure Julia is available if calling a function that needs it
+#' 
+ensure_julia <- function() {
+  
+  if (!.julia_initialized) {
+    JuliaCall::julia_setup(installJulia = FALSE, quiet = TRUE)
+    .julia_initialized <<- TRUE
+  }
+}
+

@@ -324,6 +324,13 @@ satdecay_model <- function() {
 #' @rdname linear_model
 #' @export
 satdecay_ode_model <- function() {
+  # these models will, for now, require Julia. Make sure it's available when
+  # setting up a model, before any fitting is even attempted.
+  ensure_julia()
+  if (!requireNamespace("JuliaCall", quietly = TRUE)) {
+    stop("JuliaCall is required for fitting satdecay_ode model")
+  }
+  
   structure(
     list(name = "satdecayode"),
     class = c("satdecay_ode_model", "growth_model")
