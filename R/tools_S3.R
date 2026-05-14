@@ -457,6 +457,24 @@ glance.growth_rate_result <- function(object, ...) {
   )
 }
 
+#' Augment method for growth model fit
+#' 
+#' Provides observation-level predictions and residuals based on a model fit
+#' 
+#' @param object Object of class growth_fit
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+augment.growth_fit <- function(object, ...) {
+  
+  tibble::tibble(
+    x = object$x,
+    y = object$y,
+    fitted = predict(object$fit),
+    residual = residuals(object$fit)
+  )
+}
+
 #' Empty growth model construction
 #' 
 #' Given the (character string) name of a model, generate a model specification
