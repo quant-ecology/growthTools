@@ -1,0 +1,603 @@
+# ============================================================
+# Growth Rate Modeling Framework (S3 OOP Version)
+# ============================================================
+
+
+#' Defining generics for fitting, evaluating, plotting
+#' 
+#' Specifically, when these generics are called, dispatch will occur to the method
+#' based on the first argument of the model object. This allows growth rate model
+#' specific methods for fitting, plotting, etc.
+#' 
+#' @param model Growth model type
+#' @param x Time variable
+#' @param y ln(abundance)
+#' @param \dots Additional arguments passed to fitting function (not used?)
+#' 
+#' @export
+fit_model <- function(model, x, y, ...) {
+  UseMethod("fit_model")
+}
+
+evaluate_model <- function(model, fit, x, y, ...) {
+  UseMethod("evaluate_model")
+}
+
+plot_model <- function(model, fit, x, y, ...) {
+  UseMethod("plot_model")
+}
+
+
+#' Defining growth model classes
+#' 
+#' Each growth model exists as both a 'growth_model' object and carries a specific
+#' class determining which type of growth model it is. These functions establish
+#' these class definitions.
+#' 
+#' @export
+linear_model <- function() {
+  structure(
+    list(name = "linear"),
+    class = c("linear_model", "growth_model")
+  )
+}
+
+#' @describeIn linear_model
+#' @export
+lag_model <- function() {
+  structure(
+    list(name = "lag"),
+    class = c("lag_model", "growth_model")
+  )
+}
+
+#' @describeIn linear_model
+#' @export
+sat_model <- function() {
+  structure(
+    list(name = "sat"),
+    class = c("sat_model", "growth_model")
+  )
+}
+
+#' @describeIn linear_model
+#' @export
+flr_model <- function() {
+  structure(
+    list(name = "flr"),
+    class = c("flr_model", "growth_model")
+  )
+}
+
+#' @describeIn linear_model
+#' @export
+lagsat_model <- function() {
+  structure(
+    list(name = "lagsat"),
+    class = c("lagsat_model", "growth_model")
+  )
+}
+
+#' @describeIn linear_model
+#' @export
+satdecay_model <- function() {
+  structure(
+    list(name = "satdecay"),
+    class = c("satdecay_model", "growth_model")
+  )
+}
+
+
+#' Fitting methods for growth models
+#' 
+#' Suite of fitting methods applied to different growth models in order to fit
+#' variation in ln(abundance) over time and estimate population exponential growth
+#' rate. Input follows a common structure, including model type, and redirects
+#' to specific get.gr() style function. These could probably subsume the get.gr()
+#' functions directly, instead of simply providing an alias, which would simplify 
+#' things
+#' 
+#' @param model Growth model type
+#' @param x Time variable
+#' @param y ln(abundance)
+#' @param \dots Additional arguments passed to fitting function (not used?)
+#' 
+#' @export
+fit_model.linear_model <- function(model, x, y, ...) {
+  get.gr(x, y, ...)
+}
+
+#' @describeIn fit_model.linear_model
+#' @export
+fit_model.lag_model <- function(model, x, y, ...) {
+  get.gr.lag(x, y, ...)
+}
+
+#' @describeIn fit_model.linear_model
+#' @export
+fit_model.sat_model <- function(model, x, y, ...) {
+  get.gr.sat(x, y, ...)
+}
+
+#' @describeIn fit_model.linear_model
+#' @export
+fit_model.flr_model <- function(model, x, y, ...) {
+  get.gr.flr(x, y, ...)
+}
+
+#' @describeIn fit_model.linear_model
+#' @export
+fit_model.lagsat_model <- function(model, x, y, ...) {
+  get.gr.lagsat(x, y, ...)
+}
+
+#' @describeIn fit_model.linear_model
+#' @export
+fit_model.satdecay_model <- function(model, x, y, ...) {
+  get.gr.satdecay(x, y, ...)
+}
+
+
+#' Evaluation methods for growth models
+#' 
+#' Suite of methods applied to different growth models in order to extract or 
+#' calculate key metrics for evaluating the quality of model fits. This includes 
+#' the exponential growth rate estimate itself, as well as measures for the 
+#' fit in different portions of the model (e.g., initial exponential phase vs.
+#' after saturating). Input follows a common structure, but internals vary by 
+#' model type.
+#' 
+#' @param model Growth model type
+#' @param fit Actual fit of growth model
+#' @param x Time variable
+#' @param y ln(abundance)
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+evaluate_model.linear_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  list(
+    slope = unname(coef(fit)[2]),
+    se = unname(sqrt(diag(vcov(fit)))[2]),
+    slope_n = length(x),
+    slope_r2 = get.R2(preds, y),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = NA,
+    post_r2 = NA
+  )
+}
+
+#' @describeIn evaluate_model.linear_model 
+#' @export
+evaluate_model.lag_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b1 <- coef(fit)["B1"]
+  
+  exp_idx <- x >= (b1 - 0.1)
+  pre_idx <- x <= b1
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = sum(pre_idx),
+    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+    post_n = NA,
+    post_r2 = NA
+  )
+}
+
+#' @describeIn evaluate_model.linear_model 
+#' @export
+evaluate_model.sat_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @describeIn evaluate_model.linear_model 
+#' @export
+evaluate_model.flr_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @describeIn evaluate_model.linear_model 
+#' @export
+evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @describeIn evaluate_model.linear_model 
+#' @export
+evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b1 <- coef(fit)["B1"]
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
+  pre_idx <- x <= b1
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = sum(pre_idx),
+    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' Growth fit class creation
+#' 
+#' @param model Growth model type
+#' @param fit Actual fit of growth model
+#' @param metrics Growth model diagnostics/metrics from evaluating fit
+#' @param success Was the fit successful?
+#' 
+#' @export
+new_growth_fit <- function(model,fit,metrics,success = TRUE){
+  
+  structure(
+    c(
+      list(
+        model = model,
+        fit = fit,
+        success = success
+      ),
+      metrics
+    ),
+    class = "growth_fit"
+  )
+}
+
+#' Print method for growth_fit object
+#' 
+#' @param object Object of class growth_fit
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+print.growth_fit <- function(object, ...){
+  
+  cat("Model:", object$model$name, "\n")
+  cat("Success:", object$success, "\n")
+  
+  if (object$success) {
+    cat("Slope:", object$slope, "\n")
+    cat("SE:", object$se, "\n")
+    cat("Slope R2:", object$slope_r2, "\n")
+  }
+}
+
+
+#' Fit and evaluate specific growth rate model
+#' 
+#' This generic function fits a specific user-selected growth rate model to time
+#' series data on ln(abundance). In addition to providing the final model fit, 
+#' derived metrics are calculated after the model is fit (the evaluation step). 
+#' 
+#' @param model Desired model type
+#' @param x Time steps
+#' @param y ln(abundance)
+#' @param min.exp.obs control parameter specifying the minimum number of observations that must fall within the estimated exponential phase in order to consider lag, sat, lagsat, and flr models; defaults to 3.
+#' @param internal.r2.cutoff control parameter specifying the R2 criteria that may be applied to drop fits where the number of observations in the exponential portion is equal to 3. The default value of zero permits all fits of 3 obs to be considered.
+#' 
+#' @return This function returns a growth_fit object
+#' 
+#' @export
+run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
+  
+  fit <- try(fit_model(model, x, y), silent = TRUE)
+  
+  if (inherits(fit, "try-error")) {
+    return(NULL)
+  }
+  
+  metrics <- evaluate_model(model, fit, x, y)
+  
+  success <- !(
+    metrics$slope_n < min.exp.obs ||
+      (metrics$slope_n == min.exp.obs && metrics$slope_r2 < internal.r2.cutoff)
+  )
+  
+  # consider returning blank template, rather than null?
+  if (!success) {
+    return(NULL)
+  }
+  
+  new_growth_fit(
+    model = model,
+    fit = fit,
+    metrics = metrics,
+    success = TRUE
+  )
+}
+
+#' Growth rate result class creation
+#' 
+#' @param models Set of growth rate models employed
+#' @param successful Which model(s) fit successfully
+#' @param best Growth rate model selected as the best model
+#' @param ictab Model comparison results (information criteria table)
+#' 
+#' @export
+new_growth_rate_result <- function(models,successful,best,ictab){
+  
+  structure(
+    list(
+      models = models,
+      successful = successful,
+      best = best,
+      ictab = ictab
+    ),
+    class = "growth_rate_result"
+  )
+}
+
+#' Print method for best model in the suite of growth rate results
+#' 
+#' @param object Object of class growth_rate_result
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+print.growth_rate_result <- function(object, ...) {
+  
+  cat("====================================\n")
+  cat("Growth Rate Analysis\n")
+  cat("====================================\n\n")
+  
+  cat("Best Model:", object$best$model$name, "\n")
+  cat("Slope:", object$best$slope, "\n")
+  cat("SE:", object$best$se, "\n")
+  cat("Slope R2:", object$best$slope_r2, "\n")
+  cat("\n")
+  
+  print(object$ictab)
+}
+
+#' Summary method for suite of successful growth rate results
+#' 
+#' @param object Object of class growth_rate_result
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+summary.growth_rate_result <- function(object, ...) {
+  
+  data.frame(
+    model = sapply(object$successful, function(x) x$model$name),
+    slope = sapply(object$successful, function(x) x$slope),
+    se = sapply(object$successful, function(x) x$se),
+    slope_n = sapply(object$successful, function(x) x$slope_n),
+    slope_r2 = sapply(object$successful, function(x) x$slope_r2)
+  )
+}
+
+
+#' What does this Do?
+#' 
+make_model <- function(name) {
+  
+  switch(
+    name,
+    
+    linear = linear_model(),
+    lag = lag_model(),
+    sat = sat_model(),
+    flr = flr_model(),
+    lagsat = lagsat_model(),
+    satdecay = satdecay_model(),
+    
+    stop(paste("Unknown model:", name))
+  )
+}
+
+
+
+#' Extract exponential growth rate from a time series of ln(population abundance)
+#' 
+#' This meta-function takes a time series of abundance, and attempts to extract an 
+#' estimate of exponential growth rate, using one or more of a suite of possible methods.
+#' These methods allow for the possibility that exponential growth may lag or saturate,
+#' or both, over the course of the time series. All selected methods are used to fit 
+#' models to the time series. Subsequently, model comparison (based on AIC) is used to 
+#' determine which model best fits the focal data.
+#' 
+#' @param x Time steps
+#' @param y ln(abundance)
+#' @param id Label corresponding to the population/strain/species of interest; used to determine the title and file name of saved plot, if any.
+#' @param methods Must be a character vector containing one or more of \code{'linear'}, \code{'lag'}, \code{'sat'}, \code{'flr'}, or \code{'lagsat'}
+#' @param model.selection control parameter to specify which IC metric to use in model selection; default is AICc, which corrects for small sample sizes and converges asymptotically on AIC.
+#' @param min.exp.obs control parameter specifying the minimum number of observations that must fall within the estimated exponential phase in order to consider lag, sat, lagsat, and flr models; defaults to 3.
+#' @param internal.r2.cutoff control parameter specifying the R2 criteria that may be applied to drop fits where the number of observations in the exponential portion is equal to 3. The default value of zero permits all fits of 3 obs to be considered.
+#' @param plot.best.Q logical; should the best fitting model be plotted?
+#' @param fpath character; if best model is to be plotted, provide the file path for saving the plot
+#' @param zero.time if TRUE, shift time axis so that each time series starts at time = 0
+#' 
+#' @return A data frame containing the identity of the best model, the content of the best model, the estimated slopes of the increasing linear portion of the regressions (ie, exponential growth rate), the standard errors associated with these slopes, the IC table used to determine the best model, and the full list of all models fit. See vignette for details.
+#' 
+#' @examples
+#' sdat<-data.frame(trt=c(rep('A',10),rep('B',10),rep('C',10),rep('D',10)),
+#'                 dtime=rep(seq(1,10),4),
+#'                 ln.fluor=c(c(1,1.1,0.9,1,2,3,4,5,5.2,4.7),
+#'                            c(1.1,0.9,1,2,3,4,4.1,4.2,3.7,4)+0.3,
+#'                            c(3.5,3.4,3.6,3.5,3.2,2.2,1.2,0.5,0.4,0.1),
+#'                            c(5.5,4.5,3.5,2.5,1.5,0,0.2,-0.1,0,-0.1)))
+#'                            
+#' # for single replicate                            
+#' sdat2<-sdat[sdat$trt=='A',]
+#' 
+#' # calculate growth rate using all available methods:
+#' res<-get.growth.rate(sdat2$dtime,sdat2$ln.fluor,plot.best.Q = TRUE,id = 'Population A')
+#' res$best.model
+#' res$best.slope
+#' 
+#' @export
+get.growth.rate <- function(x,y,id,
+    methods = c("linear","lag","sat","flr","lagsat","satdecay"),
+    model.selection = "AICc",min.exp.obs = 3,internal.r2.cutoff = 0,
+    plot.best.Q = TRUE, fpath = NA, zero.time = TRUE){
+  
+  # Clean data
+  keep <- !is.na(y)
+  
+  x <- x[keep]
+  y <- y[keep]
+  
+  if (zero.time) {
+    x <- x - min(x, na.rm = TRUE)
+  }
+  
+  if (length(unique(x)) < 2) {
+    stop("Fewer than two unique time points")
+  }
+  
+
+  # Set up models
+  model_objects <- lapply(methods,make_model)
+  
+
+  # Fit all models
+  results <- lapply(
+    model_objects,
+    run_growth_model,
+    x = x,
+    y = y,
+    min.exp.obs = min.exp.obs,
+    internal.r2.cutoff = internal.r2.cutoff
+  )
+  
+  names(results) <- methods
+  
+  # which worked?
+  successful <- Filter(
+    Negate(is.null),
+    results
+  )
+  
+  if (length(successful) == 0) {
+    stop("All requested models failed")
+  }
+  
+  # Model comparison, using only models that successfully fit
+  mod.list <- lapply(successful, function(x) x$fit)
+  
+  mod.names <- sapply(
+    successful,
+    function(x) x$model$name
+  )
+  
+  ictab <- switch(
+    model.selection,
+    
+    AIC = bbmle::AICtab(
+      mod.list,
+      mnames = mod.names
+    ),
+    
+    AICc = bbmle::AICctab(
+      mod.list,
+      mnames = mod.names
+    ),
+    
+    BIC = bbmle::BICtab(
+      mod.list,
+      mnames = mod.names
+    ),
+    
+    stop("Invalid model.selection")
+  )
+  
+  # extract best model
+  best.name <- attr(ictab, "row.names")[1]
+  
+  best <- successful[
+    sapply(
+      successful,
+      function(x) x$model$name == best.name
+    )
+  ][[1]]
+  
+
+  # Return results as object
+  new_growth_rate_result(
+    models = results,
+    successful = successful,
+    best = best,
+    ictab = ictab
+  )
+}
+
+
+# ============================================================
+# EXAMPLE USAGE
+# ============================================================
+
+# result <- get.growth.rate(x, y)
+
+# print(result)
+
+# summary(result)
+
+# result$best$slope
+# result$best$model$name
+# result$ictab
+# result$successful
