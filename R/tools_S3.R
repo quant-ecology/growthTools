@@ -440,6 +440,22 @@ summary.growth_rate_result <- function(object, ...) {
   )
 }
 
+#' Glance method for suite of successful growth rate results
+#' 
+#' @param object Object of class growth_rate_result
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+glance.growth_rate_result <- function(object, ...) {
+  
+  tibble::tibble(
+    best_model = object$best$model$name,
+    slope = object$best$slope,
+    se = object$best$se,
+    slope_n = object$best$slope_n,
+    slope_r2 = object$best$slope_r2
+  )
+}
 
 #' Empty growth model construction
 #' 
