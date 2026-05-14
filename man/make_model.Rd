@@ -2,10 +2,16 @@
 % Please edit documentation in R/tools_S3.R
 \name{make_model}
 \alias{make_model}
-\title{What does this Do?}
+\title{Empty growth model construction}
 \usage{
 make_model(name)
 }
+\arguments{
+\item{name}{Name of a growth model type}
+}
 \description{
-What does this Do?
+Given the (character string) name of a model, generate a model specification
+object, e.g. "linear" becomes "linear_model()", the infrastructure for holding
+a model of this type. This empty infrastructure is later populated when we
+actually ask R to fit this model using the fit_model() command.
 }
