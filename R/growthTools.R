@@ -5,10 +5,13 @@
 #' @section get.gr functions:
 #' The get.gr family of functions does ...
 #'
-#' @docType package
+#' 
 #' @name growthTools
 #' 
 #' @import methods
 #' @importClassesFrom bbmle mle2
 #' @importMethodsFrom bbmle coef predict vcov logLik
 NULL
+
+#' define as a package (replaces former '@docType package')
+"_PACKAGE"
