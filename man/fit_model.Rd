@@ -2,15 +2,27 @@
 % Please edit documentation in R/tools_S3.R
 \name{fit_model}
 \alias{fit_model}
-\alias{evaluate_model}
-\alias{plot_model}
-\title{Defining generics for fitting, evaluating, plotting}
+\alias{fit_model.linear_model}
+\alias{fit_model.lag_model}
+\alias{fit_model.sat_model}
+\alias{fit_model.flr_model}
+\alias{fit_model.lagsat_model}
+\alias{fit_model.satdecay_model}
+\title{Fitting methods for growth models}
 \usage{
 fit_model(model, x, y, ...)
 
-evaluate_model(model, fit, x, y, ...)
+\method{fit_model}{linear_model}(model, x, y, ...)
 
-plot_model(model, fit, x, y, ...)
+\method{fit_model}{lag_model}(model, x, y, ...)
+
+\method{fit_model}{sat_model}(model, x, y, ...)
+
+\method{fit_model}{flr_model}(model, x, y, ...)
+
+\method{fit_model}{lagsat_model}(model, x, y, ...)
+
+\method{fit_model}{satdecay_model}(model, x, y, ...)
 }
 \arguments{
 \item{model}{Growth model type}
@@ -22,7 +34,8 @@ plot_model(model, fit, x, y, ...)
 \item{\dots}{Additional arguments passed to fitting function (not used?)}
 }
 \description{
-Specifically, when these generics are called, dispatch will occur to the method
-based on the first argument of the model object. This allows growth rate model
-specific methods for fitting, plotting, etc.
+A suite of growth models is available which can be fit to time series of 
+ln(abundance) over time and used to estimate population exponential growth
+rate. The generic method is fit_model(), which dispatches to growth model
+specific fitting functions, ultimately these are to specific get.gr() functions.
 }

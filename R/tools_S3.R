@@ -3,11 +3,12 @@
 # ============================================================
 
 
-#' Defining generics for fitting, evaluating, plotting
+#' Fitting methods for growth models
 #' 
-#' Specifically, when these generics are called, dispatch will occur to the method
-#' based on the first argument of the model object. This allows growth rate model
-#' specific methods for fitting, plotting, etc.
+#' A suite of growth models is available which can be fit to time series of 
+#' ln(abundance) over time and used to estimate population exponential growth
+#' rate. The generic method is fit_model(), which dispatches to growth model
+#' specific fitting functions, ultimately these are to specific get.gr() functions.
 #' 
 #' @param model Growth model type
 #' @param x Time variable
@@ -21,15 +22,214 @@ fit_model <- function(model, x, y, ...) {
 
 #' @rdname fit_model
 #' @export
-evaluate_model <- function(model, fit, x, y, ...) {
-  UseMethod("evaluate_model")
+fit_model.linear_model <- function(model, x, y, ...) {
+  get.gr.linear(x, y, ...)
 }
 
 #' @rdname fit_model
 #' @export
+fit_model.lag_model <- function(model, x, y, ...) {
+  get.gr.lag(x, y, ...)
+}
+
+#' @rdname fit_model
+#' @export
+fit_model.sat_model <- function(model, x, y, ...) {
+  get.gr.sat(x, y, ...)
+}
+
+#' @rdname fit_model
+#' @export
+fit_model.flr_model <- function(model, x, y, ...) {
+  get.gr.flr(x, y, ...)
+}
+
+#' @rdname fit_model
+#' @export
+fit_model.lagsat_model <- function(model, x, y, ...) {
+  get.gr.lagsat(x, y, ...)
+}
+
+#' @rdname fit_model
+#' @export
+fit_model.satdecay_model <- function(model, x, y, ...) {
+  get.gr.satdecay(x, y, ...)
+}
+
+
+
+#' Evaluation methods for growth models
+#' 
+#' Generic for a suite of methods applied to different growth models to extract or 
+#' calculate key metrics for evaluating the quality of model fits. This includes 
+#' the exponential growth rate estimate itself, as well as measures for the 
+#' fit in different portions of the model (e.g., initial exponential phase vs.
+#' after saturating). Input follows a common structure, but internals vary by 
+#' model type.
+#' 
+#' @param model Growth model type
+#' @param fit Actual fit of growth model
+#' @param x Time variable
+#' @param y ln(abundance)
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+evaluate_model <- function(model, fit, x, y, ...) {
+  UseMethod("evaluate_model")
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.linear_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  list(
+    slope = unname(coef(fit)[2]),
+    se = unname(sqrt(diag(vcov(fit)))[2]),
+    slope_n = length(x),
+    slope_r2 = get.R2(preds, y),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = NA,
+    post_r2 = NA
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.lag_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b1 <- coef(fit)["B1"]
+  
+  exp_idx <- x >= (b1 - 0.1)
+  pre_idx <- x <= b1
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = sum(pre_idx),
+    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+    post_n = NA,
+    post_r2 = NA
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.sat_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.flr_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x <= (b2 + 0.1)
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = NA,
+    pre_r2 = NA,
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
+evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b1 <- coef(fit)["B1"]
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
+  pre_idx <- x <= b1
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = sum(pre_idx),
+    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+
+#' Plotting methods for growth models
+#' 
+#' Generic for a suite of methods used to plot the fits of different growth 
+#' models. Specific methods have yet to be written.
+#' 
+#' @param model Growth model type
+#' @param fit Actual fit of growth model
+#' @param x Time variable
+#' @param y ln(abundance)
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
 plot_model <- function(model, fit, x, y, ...) {
   UseMethod("plot_model")
 }
+
 
 
 #' Defining growth model classes
@@ -92,204 +292,9 @@ satdecay_model <- function() {
 }
 
 
-#' Fitting methods for growth models
-#' 
-#' Suite of fitting methods applied to different growth models in order to fit
-#' variation in ln(abundance) over time and estimate population exponential growth
-#' rate. Input follows a common structure, including model type, and redirects
-#' to specific get.gr() style function. These could probably subsume the get.gr()
-#' functions directly, instead of simply providing an alias, which would simplify 
-#' things
-#' 
-#' @param model Growth model type
-#' @param x Time variable
-#' @param y ln(abundance)
-#' @param \dots Additional arguments passed to fitting function (not used?)
-#' 
-#' @export
-fit_model.linear_model <- function(model, x, y, ...) {
-  get.gr.linear(x, y, ...)
-}
-
-#' @rdname fit_model.linear_model
-#' @export
-fit_model.lag_model <- function(model, x, y, ...) {
-  get.gr.lag(x, y, ...)
-}
-
-#' @rdname fit_model.linear_model
-#' @export
-fit_model.sat_model <- function(model, x, y, ...) {
-  get.gr.sat(x, y, ...)
-}
-
-#' @rdname fit_model.linear_model
-#' @export
-fit_model.flr_model <- function(model, x, y, ...) {
-  get.gr.flr(x, y, ...)
-}
-
-#' @rdname fit_model.linear_model
-#' @export
-fit_model.lagsat_model <- function(model, x, y, ...) {
-  get.gr.lagsat(x, y, ...)
-}
-
-#' @rdname fit_model.linear_model
-#' @export
-fit_model.satdecay_model <- function(model, x, y, ...) {
-  get.gr.satdecay(x, y, ...)
-}
 
 
-#' Evaluation methods for growth models
-#' 
-#' Suite of methods applied to different growth models in order to extract or 
-#' calculate key metrics for evaluating the quality of model fits. This includes 
-#' the exponential growth rate estimate itself, as well as measures for the 
-#' fit in different portions of the model (e.g., initial exponential phase vs.
-#' after saturating). Input follows a common structure, but internals vary by 
-#' model type.
-#' 
-#' @param model Growth model type
-#' @param fit Actual fit of growth model
-#' @param x Time variable
-#' @param y ln(abundance)
-#' @param \dots Additional arguments (not used)
-#' 
-#' @export
-evaluate_model.linear_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  list(
-    slope = unname(coef(fit)[2]),
-    se = unname(sqrt(diag(vcov(fit)))[2]),
-    slope_n = length(x),
-    slope_r2 = get.R2(preds, y),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = NA,
-    post_r2 = NA
-  )
-}
 
-#' @rdname evaluate_model.linear_model 
-#' @export
-evaluate_model.lag_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b1 <- coef(fit)["B1"]
-  
-  exp_idx <- x >= (b1 - 0.1)
-  pre_idx <- x <= b1
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = sum(pre_idx),
-    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
-    post_n = NA,
-    post_r2 = NA
-  )
-}
-
-#' @rdname evaluate_model.linear_model 
-#' @export
-evaluate_model.sat_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b2 <- coef(fit)["B2"]
-  
-  exp_idx <- x <= (b2 + 0.1)
-  post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
-  )
-}
-
-#' @rdname evaluate_model.linear_model 
-#' @export
-evaluate_model.flr_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b2 <- coef(fit)["B2"]
-  
-  exp_idx <- x <= (b2 + 0.1)
-  post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
-  )
-}
-
-#' @rdname evaluate_model.linear_model 
-#' @export
-evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b2 <- coef(fit)["B2"]
-  
-  exp_idx <- x <= (b2 + 0.1)
-  post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
-  )
-}
-
-#' @rdname evaluate_model.linear_model 
-#' @export
-evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b1 <- coef(fit)["B1"]
-  b2 <- coef(fit)["B2"]
-  
-  exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
-  pre_idx <- x <= b1
-  post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = sum(pre_idx),
-    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
-  )
-}
 
 #' Growth fit class creation
 #' 
