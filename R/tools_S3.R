@@ -198,21 +198,32 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
 #' @export
 evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   
-  preds <- predict(fit)
+  # to generate predictions from an mle2 model with implicit NLL calc,
+  # need to compute from scratch.
   
-  b2 <- coef(fit)["B2"]
+  # extract and back transform coefficients
+  tcoef<-function(cfs){
+    vec<-c(exp(cfs[1]),exp(cfs[2]),1 / (1 + exp(-cfs[3])),exp(cfs[4]),cfs[5],exp(cfs[6]))
+    names(vec)<-c('alpha','vmax','c','d','n0','sigma')
+    vec
+  }
+  cfs<-data.frame(t(tcoef(coef(fit))))
   
-  exp_idx <- x <= (b2 + 0.1)
-  post_idx <- x >= b2
+  # calculate predicted values using these coefficients from the fit:
+  preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
+  
+  #b2 <- coef(fit)["B2"]
+  #exp_idx <- x <= (b2 + 0.1)
+  #post_idx <- x >= b2
   
   list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
+    slope = unname(cfs['vmax']*(1-cfs['d'])),
+    se = NA, #need to figure out calculation of se for this composite parameter
+    slope_n = NA, #sum(exp_idx),
     slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
     pre_n = NA,
     pre_r2 = NA,
-    post_n = sum(post_idx),
+    post_n = NA, #sum(post_idx),
     post_r2 = get.R2(preds[post_idx], y[post_idx])
   )
 }
