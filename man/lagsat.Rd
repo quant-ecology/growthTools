@@ -6,7 +6,7 @@
 \alias{sat}
 \alias{satdecay}
 \alias{flr}
-\title{Equations for modeling abundace time series}
+\title{Equations for modeling abundance time series}
 \usage{
 lagsat(x, a, b, B1, B2, s = 1e-10)
 
@@ -21,7 +21,7 @@ flr(x, a, b, B2, s = 1e-10)
 \arguments{
 \item{x}{Time variable}
 
-\item{a}{Initial abundance at time = 0}
+\item{a}{Initial log(abundance) at time = 0}
 
 \item{b}{slope of the increasing linear portion of the time series, must be >=0}
 
@@ -34,14 +34,14 @@ flr(x, a, b, B2, s = 1e-10)
 \item{b2}{slope of the decreasing linear portion of the time series (satdecay), must be <=0}
 }
 \value{
-Abundance at time x as a function of model parameters
+log(abundance) at time x as a function of model parameters
 }
 \description{
 Intended to allow the extraction of exponential growth rates from time series 
 while accounting for the presence of initial lags in growth, saturating abundances,
 or both in the same time series. These equations provide smoothed piecewise linear
 functions, where lagged or saturated portions of the time series maintain constant 
-abundance, and elsewhere abundance increases linearly.
+abundance, and elsewhere log(abundance) increases linearly.
 }
 \details{
 This approach for lag, saturation, and lag+saturation are based on:
