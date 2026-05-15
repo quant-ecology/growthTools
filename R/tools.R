@@ -355,7 +355,7 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
   JuliaCall::julia_assign("tmax_global", max(max(x), 10))
 
   # precompile solver: (is this necessary/helpful?)
-  JuliaCall::julia_eval("prob = remake(prob_template); solve(prob, Tsit5(), saveat=times_obs)")
+  JuliaCall::julia_eval("prob = remake(prob_template); sol = solve(prob, Tsit5(), saveat=times_obs); nothing")
   
   # local version of satdecay.ode(), to optimize run time. Uses fixed time vals
   satdecay.ode.local <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
