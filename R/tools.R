@@ -17,13 +17,13 @@ sqfunc<-function(x,b,s){
 }
 
 
-#' Equations for modeling abundace time series
+#' Equations for modeling abundance time series
 #' 
 #' Intended to allow the extraction of exponential growth rates from time series 
 #' while accounting for the presence of initial lags in growth, saturating abundances,
 #' or both in the same time series. These equations provide smoothed piecewise linear
 #' functions, where lagged or saturated portions of the time series maintain constant 
-#' abundance, and elsewhere abundance increases linearly.
+#' abundance, and elsewhere log(abundance) increases linearly.
 #' 
 #' This approach for lag, saturation, and lag+saturation are based on:
 #' https://stats.stackexchange.com/questions/149627/piecewise-regression-with-constraints
@@ -37,14 +37,14 @@ sqfunc<-function(x,b,s){
 #' possibility in future versions of this package.
 #' 
 #' @param x Time variable
-#' @param a Initial abundance at time = 0
+#' @param a Initial log(abundance) at time = 0
 #' @param b slope of the increasing linear portion of the time series, must be >=0
 #' @param b2 slope of the decreasing linear portion of the time series (satdecay), must be <=0
 #' @param B1 Time point where abundance starts to increase (leaves lag phase)
 #' @param B2 Time point where abundance stops increasing (saturates)
 #' @param s Smoothing parameter; as this term -> 0, these continuous functions approach true piecewise equations
 #' 
-#' @return Abundance at time x as a function of model parameters
+#' @return log(abundance) at time x as a function of model parameters
 #' 
 #' @examples 
 #' 
@@ -81,6 +81,50 @@ satdecay<-function(x,a,b,b2,B2,s=1E-10){
 flr<-function(x,a,b,B2,s=1E-10){
   b <- -1*b
   a - (1/2)*(b)*(B2) - sqfunc(-x,b,s) + sqfunc(B2-x,b,s)
+}
+
+#' ODE Equations for modeling abundance time series
+#' 
+#' Intended to allow the extraction of exponential growth rates from time series 
+#' while accounting for unobserved, resource-dependent growth, saturating abundance,
+#' and potentially declines in abundance after saturation due to accumulation of
+#' resource in a recalcitrant pool. The satdecay() function is a piecewise linear
+#' approximation of these dynamics.
+#' 
+#' NOTE: currently, this function depends on computation of numerical ODE solution
+#' in Julia (for computational efficiency), and will not work without a functional
+#' connection to Julia. 
+#' 
+#' @param x Time variable
+#' @param alpha Affinity; defined as vmax over k, must be >0
+#' @param vmax Maximum uptake rate, must be >0
+#' @param cpar Proportion of dead biomass returned to the labile resource pool, must be 0 <= cpar <= 1
+#' @param dpar Mortality rate, must be >0
+#' @param r0 Initial resource concentration at time t=0 (unitless, scaled by k, must be >0)
+#' @param n0 Initial log(abundance) at time t=0
+#' 
+#' @return log(abundance) at time x as a function of model parameters
+#' 
+#' @export
+satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
+  
+  # make sure Julia is accessible
+  ensure_julia()
+  if (!requireNamespace("JuliaCall", quietly = TRUE)) {
+    stop("JuliaCall is required for fitting satdecay_ode model")
+  }
+  
+  # define time range
+  tmax <- max(max(x), 10)
+  
+  julia_assign("times", x)
+  julia_assign("p_new", c(alpha, vmax, cpar, dpar))
+  julia_assign("u0_new", c(r0, n0))
+  julia_assign("tmax", tmax)
+  
+  # below only works if x is more than one value
+  vals <- julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); [sol(t)[2] for t in times]")
+  return(vals)
 }
 
 
@@ -330,8 +374,7 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
   data<-data.frame(x=x,y=y)
   
   if(length(unique(x))<4){
-    print("error: fewer than four distinct time steps provided to get.gr.satdecay.ode")
-    break;
+    stop("error: fewer than four distinct time steps provided to get.gr.satdecay.ode")
   }
   
   ## Formulate starting guesses:
@@ -346,7 +389,7 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
   
   vmax.guess <- slope0 - slope_end
   d.guess    <- -slope_end / vmax.guess
-  n0.guess <- y[x==min(x)[1]]
+  n0.guess <- y[which.min(x)]
   c.guess <- 0.2
   alpha.guess <- 0.1 * vmax.guess # careful with this one; linked to r0 assumption
   
