@@ -588,7 +588,7 @@ make_model <- function(name) {
 #' 
 #' @export
 get.growth.rate <- function(x,y,id,
-    methods = c("linear","lag","sat","flr","lagsat","satdecay"),
+    methods = c("linear","lag","sat","flr","lagsat","satdecay","satdecayode"),
     model.selection = "AICc",min.exp.obs = 3,internal.r2.cutoff = 0,
     plot.best.Q = TRUE, fpath = NA, zero.time = TRUE){
   
