@@ -93,6 +93,17 @@ fd2.central<-function(fx,h){
   (fx[3]-2*fx[2]+fx[1])/(h^2)
 }
 
+#' Extract number of observations from mle2 object
+#' 
+#' By default, mle2 objects from bbmle produced by fitting a model to data without
+#' an explicit formula (e.g., using a black-boxed NLL calculator function instead)
+#' do not provide the number of observations underlying the fit. This extends the 
+#' nobs() generic with a specific method for mle2 objects.
+#' 
+nobs.mle2<-function(object){
+  length(object@data[[1]])
+}
+
 
 #' Make sure Julia is available if calling a function that needs it
 #' 
