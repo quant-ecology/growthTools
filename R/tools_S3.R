@@ -237,17 +237,19 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   # calculate predicted values using these coefficients from the fit:
   preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
   
-  # estimate time of peak abundance:
-  g <- cfs$vmax * (r0/(r0+1) - cfs$d)
-  rstar <- cfs$d / (1 - cfs$d)
+  # Approximate estimate time of peak abundance:
+  #g <- cfs$vmax * (r0/(r0+1) - cfs$d)
+  #rstar <- cfs$d / (1 - cfs$d)
+  #tmax.est <- (1/g)*log(1 + g * (r0 - rstar)/(cfs$alpha * exp(cfs$n0) * (1 - cfs$c * cfs$d)))
   
-  tmax.est <- (1/g)*log(1 + g * (r0 - rstar)/(cfs$alpha * exp(cfs$n0) * (1 - cfs$c * cfs$d)))
+  # Numerical estimate of peak abundance
+  tmax.est<-satdecay.ode.peak.time(cfs)
   
   exp_idx <- x <= (tmax.est + 0.1)
   post_idx <- x >= tmax.est
   
   list(
-    slope = as.vector(unname(cfs['vmax']*(1-cfs['d'])))[[1]],
+    slope = cfs$vmax[[1]] * (1 - cfs$d[[1]]), #as.vector(unname(cfs['vmax']*(1-cfs['d'])))[[1]],
     se = NA, #need to figure out calculation of se for this composite parameter
     slope_n = sum(exp_idx),
     slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
