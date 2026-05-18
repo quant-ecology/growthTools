@@ -123,13 +123,14 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
   # define time range
   tmax <- max(max(xvec), 10)
   
-  julia_assign("times", xvec)
-  julia_assign("p_new", c(alpha, vmax, cpar, dpar))
-  julia_assign("u0_new", c(r0, n0))
-  julia_assign("tmax", tmax)
+  JuliaCall::julia_assign("times", xvec)
+  JuliaCall::julia_assign("p_new", c(alpha, vmax, cpar, dpar))
+  JuliaCall::julia_assign("u0_new", c(r0, n0))
+  JuliaCall::julia_assign("tmax", tmax)
   
   # now works for x as single value or vector of time points
-  vals <- julia_eval("times = vec(collect(times)); prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
+  #vals <- julia_eval("times = vec(collect(times)); prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
+  vals <- JuliaCall::julia_eval("tspan_new = (0, tmax); times = vec(collect(times)); prob = ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
   
   # return scalar if scalar supplied
   if (scalar_input) {
@@ -156,11 +157,12 @@ satdecay.ode.peak.time <- function(cfs, r0=10, tmax=100){
     stop("JuliaCall is required for fitting satdecay_ode model")
   }
   
-  julia_assign("p_new", c(cfs$alpha, cfs$vmax, cfs$c, cfs$d))
-  julia_assign("u0_new", c(r0, cfs$n0))
-  julia_assign("tmax_local", tmax)
-  
-  julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0,tmax_local)); sol = solve(prob,Tsit5(),saveat=0.01,reltol=1e-8,abstol=1e-8,save_everystep=false); rvals = [u[1] for u in sol.u]; thresh = p_new[4] / (1 - p_new[4]); idx = findfirst(x -> x <= thresh, rvals); idx === nothing ? NaN : sol.t[idx];")
+  JuliaCall::julia_assign("p_new", c(cfs$alpha, cfs$vmax, cfs$c, cfs$d))
+  JuliaCall::julia_assign("u0_new", c(r0, cfs$n0))
+  JuliaCall::julia_assign("tmax_local", tmax)
+
+  JuliaCall::julia_eval("tspan_new = (0, tmax_local); times = vec(collect(times)); prob = SciMLBase.ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), saveat=0.01,reltol=1e-8,abstol=1e-8,save_everystep=false); rvals = [u[1] for u in sol.u]; thresh = p_new[4] / (1 - p_new[4]); idx = findfirst(x -> x <= thresh, rvals); idx === nothing ? NaN : sol.t[idx];")
+  #julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0,tmax_local)); sol = solve(prob,Tsit5(),saveat=0.01,reltol=1e-8,abstol=1e-8,save_everystep=false); rvals = [u[1] for u in sol.u]; thresh = p_new[4] / (1 - p_new[4]); idx = findfirst(x -> x <= thresh, rvals); idx === nothing ? NaN : sol.t[idx];")
 }
 
 
@@ -427,6 +429,13 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
 get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
+  
+  # make sure Julia is accessible
+  ensure_julia()
+  if (!requireNamespace("JuliaCall", quietly = TRUE)) {
+    stop("JuliaCall is required for fitting satdecay_ode model")
+  }
+  
   data<-data.frame(x=x,y=y)
   
   if(length(unique(x))<4){
@@ -451,10 +460,11 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
   
   # set up for likelihood calculation:
   JuliaCall::julia_assign("times_obs", x)
-  JuliaCall::julia_assign("tmax_global", max(max(x), 10))
+  tmax.global<-max(max(x), 10)
+  JuliaCall::julia_assign("tmax_global", tmax.global)
 
   # precompile solver: (is this necessary/helpful?)
-  JuliaCall::julia_eval("prob = remake(prob_template); sol = solve(prob, Tsit5(), saveat=times_obs); nothing")
+  #JuliaCall::julia_eval("prob = remake(prob_template); sol = solve(prob, Tsit5(), saveat=times_obs); nothing")
   
   # local version of satdecay.ode(), to optimize run time. Uses fixed time vals
   satdecay.ode.local <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
@@ -465,7 +475,8 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
     JuliaCall::julia_assign("u0_new", c(r0, n0))
     
     # below only works if x is more than one value
-    vals <- JuliaCall::julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax_global)); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
+    #vals <- JuliaCall::julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax_global)); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
+    vals <- JuliaCall::julia_eval("tspan_new = (0, tmax_global); prob = SciMLBase.ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
     
     return(vals)
   }
@@ -514,11 +525,9 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.satdecay.ode,"condition"))
     }
     print('fit.satdecay.ode failed after two tries')
-    cfs<-NA
-    derived<-NA
   }else{ # take desired actions on obtaining a successful fit
     
-    # augment results with derived parameters of interest:
+    # augment results with derived parameters of interest?
     
     # back transform coefficients
     tcoef<-function(cfs){
@@ -527,8 +536,6 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
       vec
     }
     cfs<-data.frame(t(tcoef(coef(fit.satdecay.ode))))
-    
-    derived <- derive.satdecay.stats(cfs,r0 = 10)
     
     if(plotQ){
       if(!is.na(fpath)){
@@ -543,11 +550,7 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
     }
   }
   
-  return(list(
-    fit = fit.satdecay.ode,
-    coef = cfs,
-    derived = derived
-  ))
+  return(fit.satdecay.ode)
 }
 
 

@@ -109,10 +109,51 @@ nobs.mle2<-function(object){
 #' 
 ensure_julia <- function() {
   
+  # need JuliaCall package
   if (!requireNamespace("JuliaCall", quietly = TRUE)) {
     stop("JuliaCall not installed")
   }
   
-  JuliaCall::julia_setup(installJulia = FALSE) # quiet = TRUE
-}
+  # detect Julia session
+  julia_alive <- !inherits(
+    try(JuliaCall::julia_eval("1"), silent = TRUE),
+    "try-error"
+  )
+  if (!julia_alive) {
+    JuliaCall::julia_setup(installJulia = FALSE)
+  }
+  
+  # check if already fully initialized (R-side AND Julia-side)
+  julia_ready <- tryCatch({
+    JuliaCall::julia_eval("isdefined(Main, :solve)")
+  }, error = function(e) FALSE)
+  if (exists(".julia_initialized", envir = .GlobalEnv, inherits = FALSE) &&
+      julia_ready) {
+    return(invisible(NULL))
+  }
+  
+  # otherwise, julia is set up but has not yet been initialized for ODE work, so:      
+  # HARD LOAD SciML STACK (critical)
+  JuliaCall::julia_eval("using Pkg; using DifferentialEquations;")
+  
+  # VERIFY it actually worked (important)
+  JuliaCall::julia_eval("ODEProblem")
+  
+  # ODE in log-space
+  JuliaCall::julia_eval("
+    function f!(du,u,p,t)
+      alpha, vmax, c, d = p
 
+      r = u[1]
+      n = u[2]   # log(N)
+
+      du[1] = alpha * exp(n) * (c*d - r/(r+1))
+      du[2] = vmax * (r/(r+1) - d)
+    end
+  ")
+  
+  # evaluate a dummy/template version of the problem:
+  #JuliaCall::julia_eval("u0 = [1.0, 1.0]; p  = [1.0, 1.0, 0.5, 0.5]; tspan = (0.0, 10.0); prob_template = ODEProblem(f!, u0, tspan, p)")
+  
+  assign(".julia_initialized", TRUE, envir = .GlobalEnv)
+}

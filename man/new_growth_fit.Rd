@@ -4,14 +4,25 @@
 \alias{new_growth_fit}
 \title{Growth fit class creation}
 \usage{
-new_growth_fit(model, fit, metrics, growth.rate.valid = FALSE)
+new_growth_fit(
+  model,
+  fit,
+  results,
+  status = "ok",
+  error = NA,
+  growth.rate.valid = FALSE
+)
 }
 \arguments{
 \item{model}{Growth model type}
 
 \item{fit}{Actual fit of growth model}
 
-\item{metrics}{Growth model diagnostics/metrics from evaluating fit}
+\item{results}{Growth model results, including diagnostics/metrics from evaluating fit}
+
+\item{status}{Status of growth model fit and evaluation}
+
+\item{error}{Error(s) arising when model fit or evaluation failed}
 
 \item{growth.rate.valid}{Does the fit meet conditions for robust growth rate estimate?}
 }
