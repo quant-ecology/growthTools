@@ -128,8 +128,8 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
   julia_assign("u0_new", c(r0, n0))
   julia_assign("tmax", tmax)
   
-  # below only works if x is more than one value
-  vals <- julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); [sol(t)[2] for t in times]")
+  # now works for x as single value or vector of time points
+  vals <- julia_eval("times = vec(collect(times)); prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
   
   # return scalar if scalar supplied
   if (scalar_input) {
@@ -179,7 +179,7 @@ derive.satdecay.stats <- function(cfs, r0=10){
   
   tmax <- satdecay.ode.peak.time(cfs)
   
-  nmax <- satdecay.ode(c(tmax,tmax),cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0 = r0,n0 = cfs$n0)
+  nmax <- satdecay.ode(tmax,cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0 = r0,n0 = cfs$n0)
   
   list(tmax = tmax,nmax = nmax)
 }
@@ -501,16 +501,24 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
     control=list(maxit=10000),
     data=data
   ),silent=TRUE)
+  
   if(class(fit.satdecay.ode)=='try-error'){
     print("first attempt at fit failed in get.gr.satdecay.ode") 
     #try again with different settings?
+    
+    # NOT currently implemented...
   }
+  
   if(class(fit.satdecay.ode)=='try-error'){ # failed again
     if(!grepl(attr(fit.satdecay.ode,"condition"),pattern='singular gradient matrix')){
       print(attr(fit.satdecay.ode,"condition"))
     }
-    #print('fit.satdecay.ode failed after two tries')
-  }else{ # can generate plot
+    print('fit.satdecay.ode failed after two tries')
+    cfs<-NA
+    derived<-NA
+  }else{ # take desired actions on obtaining a successful fit
+    
+    # augment results with derived parameters of interest:
     
     # back transform coefficients
     tcoef<-function(cfs){
@@ -519,6 +527,8 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
       vec
     }
     cfs<-data.frame(t(tcoef(coef(fit.satdecay.ode))))
+    
+    derived <- derive.satdecay.stats(cfs,r0 = 10)
     
     if(plotQ){
       if(!is.na(fpath)){
@@ -533,7 +543,11 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
     }
   }
   
-  return(fit.satdecay.ode)
+  return(list(
+    fit = fit.satdecay.ode,
+    coef = cfs,
+    derived = derived
+  ))
 }
 
 
