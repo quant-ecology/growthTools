@@ -5,10 +5,10 @@
 \alias{evaluate_model.linear_model}
 \alias{evaluate_model.lag_model}
 \alias{evaluate_model.sat_model}
+\alias{evaluate_model.lagsat_model}
 \alias{evaluate_model.flr_model}
 \alias{evaluate_model.satdecay_model}
 \alias{evaluate_model.satdecay_ode_model}
-\alias{evaluate_model.lagsat_model}
 \title{Evaluation methods for growth models}
 \usage{
 evaluate_model(model, fit, x, y, ...)
@@ -19,13 +19,13 @@ evaluate_model(model, fit, x, y, ...)
 
 \method{evaluate_model}{sat_model}(model, fit, x, y, ...)
 
+\method{evaluate_model}{lagsat_model}(model, fit, x, y, ...)
+
 \method{evaluate_model}{flr_model}(model, fit, x, y, ...)
 
 \method{evaluate_model}{satdecay_model}(model, fit, x, y, ...)
 
 \method{evaluate_model}{satdecay_ode_model}(model, fit, x, y, ...)
-
-\method{evaluate_model}{lagsat_model}(model, fit, x, y, ...)
 }
 \arguments{
 \item{model}{Growth model type}

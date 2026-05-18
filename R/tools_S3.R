@@ -150,6 +150,31 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
 
 #' @rdname evaluate_model
 #' @export
+evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
+  
+  preds <- predict(fit)
+  
+  b1 <- coef(fit)["B1"]
+  b2 <- coef(fit)["B2"]
+  
+  exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
+  pre_idx <- x <= b1
+  post_idx <- x >= b2
+  
+  list(
+    slope = unname(coef(fit)["b"]),
+    se = unname(sqrt(diag(vcov(fit)))["b"]),
+    slope_n = sum(exp_idx),
+    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+    pre_n = sum(pre_idx),
+    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+    post_n = sum(post_idx),
+    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  )
+}
+
+#' @rdname evaluate_model
+#' @export
 evaluate_model.flr_model <- function(model, fit, x, y, ...) {
   
   preds <- predict(fit)
@@ -212,47 +237,27 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   # calculate predicted values using these coefficients from the fit:
   preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
   
-  #b2 <- coef(fit)["B2"]
-  #exp_idx <- x <= (b2 + 0.1)
-  #post_idx <- x >= b2
+  # estimate time of peak abundance:
+  g <- cfs$vmax * (r0/(r0+1) - cfs$d)
+  rstar <- cfs$d / (1 - cfs$d)
+  
+  tmax.est <- (1/g)*log(1 + g * (r0 - rstar)/(cfs$alpha * exp(cfs$n0) * (1 - cfs$c * cfs$d)))
+  
+  exp_idx <- x <= (tmax.est + 0.1)
+  post_idx <- x >= tmax.est
   
   list(
-    slope = unname(cfs['vmax']*(1-cfs['d'])),
+    slope = as.vector(unname(cfs['vmax']*(1-cfs['d'])))[[1]],
     se = NA, #need to figure out calculation of se for this composite parameter
-    slope_n = NA, #sum(exp_idx),
+    slope_n = sum(exp_idx),
     slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
     pre_n = NA,
     pre_r2 = NA,
-    post_n = NA, #sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
-  )
-}
-
-
-#' @rdname evaluate_model
-#' @export
-evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
-  
-  preds <- predict(fit)
-  
-  b1 <- coef(fit)["B1"]
-  b2 <- coef(fit)["B2"]
-  
-  exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
-  pre_idx <- x <= b1
-  post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = sum(pre_idx),
-    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
     post_n = sum(post_idx),
     post_r2 = get.R2(preds[post_idx], y[post_idx])
   )
 }
+
 
 
 #' Plotting methods for growth models
