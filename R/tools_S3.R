@@ -237,26 +237,31 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   # calculate predicted values using these coefficients from the fit:
   preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
   
-  # Approximate estimate time of peak abundance:
-  #g <- cfs$vmax * (r0/(r0+1) - cfs$d)
-  #rstar <- cfs$d / (1 - cfs$d)
-  #tmax.est <- (1/g)*log(1 + g * (r0 - rstar)/(cfs$alpha * exp(cfs$n0) * (1 - cfs$c * cfs$d)))
-  
   # Numerical estimate of peak abundance
-  tmax.est<-satdecay.ode.peak.time(cfs)
+  derived <- derive.satdecay.stats(cfs,r0 = 10)
+  #tmax.est<-satdecay.ode.peak.time(cfs)
   
-  exp_idx <- x <= (tmax.est + 0.1)
-  post_idx <- x >= tmax.est
+  exp_idx <- x <= (derived$tmax + 0.1)
+  post_idx <- x >= derived$tmax
   
   list(
-    slope = cfs$vmax[[1]] * (1 - cfs$d[[1]]), #as.vector(unname(cfs['vmax']*(1-cfs['d'])))[[1]],
-    se = NA, #need to figure out calculation of se for this composite parameter
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
+    model = "satdecay_ode",
+    coef = cfs,
+    preds = preds,
+    metrics = list(
+      se = NA, #need to figure out calculation of se for this composite parameter
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = NA,
+      pre_r2 = NA,
+      post_n = sum(post_idx),
+      post_r2 = get.R2(preds[post_idx], y[post_idx])
+    ),
+    derived = list(
+      slope = cfs$vmax[[1]] * (1 - cfs$d[[1]]), 
+      tmax = derived$tmax,
+      nmax = derived$nmax
+    )
   )
 }
 
@@ -363,19 +368,19 @@ satdecay_ode_model <- function() {
 #' @param model Growth model type
 #' @param fit Actual fit of growth model
 #' @param metrics Growth model diagnostics/metrics from evaluating fit
-#' @param success Was the fit successful?
+#' @param growth.rate.valid Does the fit meet conditions for robust growth rate estimate?
 #' 
 #' @export
-new_growth_fit <- function(model,fit,metrics,success = TRUE){
+new_growth_fit <- function(model,fit,metrics,growth.rate.valid = FALSE){
   
   structure(
-    c(
-      list(
-        model = model,
-        fit = fit,
-        success = success
-      ),
-      metrics
+    list(
+      model = model,
+      fit = fit,
+      metrics = metrics,
+      status = status,
+      error = error,
+      growth.rate.valid = growth.rate.valid
     ),
     class = "growth_fit"
   )
@@ -390,9 +395,9 @@ new_growth_fit <- function(model,fit,metrics,success = TRUE){
 print.growth_fit <- function(object, ...){
   
   cat("Model:", object$model$name, "\n")
-  cat("Success:", object$success, "\n")
+  cat("Growth rate valid:", object$growth.rate.valid, "\n")
   
-  if (object$success) {
+  if (object$growth.rate.valid) {
     cat("Slope:", object$slope, "\n")
     cat("SE:", object$se, "\n")
     cat("Slope R2:", object$slope_r2, "\n")
@@ -417,29 +422,62 @@ print.growth_fit <- function(object, ...){
 #' @export
 run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
   
+  # helper function in case of fit failure:
+  fail_fit <- function(stage, err = NA){
+    new_growth_fit(
+      model = model,
+      fit = NULL,
+      metrics = list(
+        slope_n = NA,
+        slope_r2 = NA,
+        pre_n = NA,
+        pre_r2 = NA,
+        post_n = NA,
+        post_r2 = NA,
+        tmax = NA,
+        nmax = NA
+      ),
+      status = stage,
+      error = err,
+      growth.rate.valid = FALSE
+    )
+  }
+  
+  # attempt fit:
   fit <- try(fit_model(model, x, y), silent = TRUE)
   
-  if (inherits(fit, "try-error")) {
-    return(NULL)
+  if(inherits(fit, "try-error")) {
+    return(fail_fit(stage="fit_failed", err=attr(fit, "condition")))
   }
   
-  metrics <- evaluate_model(model, fit, x, y)
+  # If fit succeeded, can evaluate the model:
+  metrics <- try(evaluate_model(model, fit, x, y), silent = TRUE)
   
-  success <- !(
-    metrics$slope_n < min.exp.obs ||
-      (metrics$slope_n == min.exp.obs && metrics$slope_r2 < internal.r2.cutoff)
+  # Note: this is probably too severe? what if only some metrics can't be calculated?
+  # this would blank all of them out in the event of any error...
+  if(inherits(metrics, "try-error")) {
+    return(fail_fit(stage = "evaluation_failed",err = attr(metrics, "condition")))
+  }
+  
+  # check whether fit has properties that are sufficient for the growth rate 
+  # estimate to be robust/valid; e.g., based on enough observations
+  growth.rate.valid <- !(
+    is.na(metrics$slope_n) ||
+      metrics$slope_n < min.exp.obs ||
+      (metrics$slope_n == min.exp.obs &&
+         !is.na(metrics$slope_r2) &&
+         metrics$slope_r2 < internal.r2.cutoff)
   )
   
-  # consider returning blank template, rather than null?
-  if (!success) {
-    return(NULL)
-  }
-  
+  # return standard object.
+  # will indicate that fit is ok, but growth rate may not be valid; see above
   new_growth_fit(
     model = model,
     fit = fit,
     metrics = metrics,
-    success = TRUE
+    status = "fit_ok",
+    error = NA,
+    growth.rate.valid = growth.rate.valid
   )
 }
 
