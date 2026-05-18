@@ -127,6 +127,29 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
   return(vals)
 }
 
+#' Estimate timing of peak abundance (satdecay ODE model)
+#' 
+#' Given a set of estimated coefficients for a satdecay ODE model, use numerical
+#' methods in Julia to calculate the timing of peak ln(abundance).
+#' 
+#' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()
+#' @param r0 Initial resource concentration (set arbitrarily to 10 throughout)
+#' @param tmax Maximum of time domain
+#' 
+#' @export
+satdecay.ode.peak.time <- function(cfs, r0=10, tmax=100){
+  # make sure Julia is accessible
+  ensure_julia()
+  if (!requireNamespace("JuliaCall", quietly = TRUE)) {
+    stop("JuliaCall is required for fitting satdecay_ode model")
+  }
+  
+  julia_assign("p_new", c(cfs$alpha, cfs$vmax, cfs$c, cfs$d))
+  julia_assign("u0_new", c(r0, cfs$n0))
+  julia_assign("tmax_local", tmax)
+  
+  julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0,tmax_local)); sol = solve(prob,Tsit5(),saveat=0.01,reltol=1e-8,abstol=1e-8,save_everystep=false); rvals = [u[1] for u in sol.u]; thresh = p_new[4] / (1 - p_new[4]); idx = findfirst(x -> x <= thresh, rvals); idx === nothing ? NaN : sol.t[idx];")
+}
 
 #' Extract exponential growth rate assuming exponential growth
 #' 
