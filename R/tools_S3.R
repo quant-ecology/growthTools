@@ -471,8 +471,11 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
     stop("newdata must be a data frame (in predict.growth_fit())")
   }
   
+  print(length(object$fit))
+  print(object$fit)
+  
   # check for viable fit:
-  if (is.null(object$fit) || is.na(object$fit)) {
+  if (length(object$fit) == 1 && (is.null(object$fit) || is.na(object$fit))) {
     return(rep(NA, nrow(newdata))) # if none, return NAs
   }
   
