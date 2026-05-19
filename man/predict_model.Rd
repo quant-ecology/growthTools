@@ -2,28 +2,28 @@
 % Please edit documentation in R/tools_S3.R
 \name{predict_model}
 \alias{predict_model}
-\alias{predict_model.linear}
-\alias{predict_model.lag}
-\alias{predict_model.sat}
-\alias{predict_model.lagsat}
-\alias{predict_model.flr}
-\alias{predict_model.satdecay}
+\alias{predict_model.linear_model}
+\alias{predict_model.lag_model}
+\alias{predict_model.sat_model}
+\alias{predict_model.lagsat_model}
+\alias{predict_model.flr_model}
+\alias{predict_model.satdecay_model}
 \alias{predict_model.satdecay_ode_model}
 \title{Prediction methods for growth models}
 \usage{
 predict_model(model, object, newdata, ...)
 
-\method{predict_model}{linear}(model, object, newdata, ...)
+\method{predict_model}{linear_model}(model, object, newdata, ...)
 
-\method{predict_model}{lag}(model, object, newdata, ...)
+\method{predict_model}{lag_model}(model, object, newdata, ...)
 
-\method{predict_model}{sat}(model, object, newdata, ...)
+\method{predict_model}{sat_model}(model, object, newdata, ...)
 
-\method{predict_model}{lagsat}(model, object, newdata, ...)
+\method{predict_model}{lagsat_model}(model, object, newdata, ...)
 
-\method{predict_model}{flr}(model, object, newdata, ...)
+\method{predict_model}{flr_model}(model, object, newdata, ...)
 
-\method{predict_model}{satdecay}(model, object, newdata, ...)
+\method{predict_model}{satdecay_model}(model, object, newdata, ...)
 
 \method{predict_model}{satdecay_ode_model}(model, object, newdata, ...)
 }

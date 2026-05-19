@@ -507,13 +507,13 @@ predict_model <- function(model, object, newdata, ...) {
 
 #' @rdname predict_model
 #' @export
-predict_model.linear <- function(model, object, newdata, ...) {
+predict_model.linear_model <- function(model, object, newdata, ...) {
   predict(object$fit, newdata = newdata)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.lag <- function(model, object, newdata, ...) {
+predict_model.lag_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   lag(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, s  = 1E-10)
@@ -521,7 +521,7 @@ predict_model.lag <- function(model, object, newdata, ...) {
 
 #' @rdname predict_model
 #' @export
-predict_model.sat <- function(model, object, newdata, ...) {
+predict_model.sat_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   sat(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
@@ -529,7 +529,7 @@ predict_model.sat <- function(model, object, newdata, ...) {
 
 #' @rdname predict_model
 #' @export
-predict_model.lagsat <- function(model, object, newdata, ...) {
+predict_model.lagsat_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   lagsat(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, B2 = cfs$B2, s  = 1E-10)
@@ -537,7 +537,7 @@ predict_model.lagsat <- function(model, object, newdata, ...) {
 
 #' @rdname predict_model
 #' @export
-predict_model.flr <- function(model, object, newdata, ...) {
+predict_model.flr_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   flr(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
@@ -545,7 +545,7 @@ predict_model.flr <- function(model, object, newdata, ...) {
 
 #' @rdname predict_model
 #' @export
-predict_model.satdecay <- function(model, object, newdata, ...) {
+predict_model.satdecay_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   satdecay(newdata$x, a  = cfs$a, b  = cfs$b, b2 = cfs$b2, B2 = cfs$B2, s  = 1E-10)
