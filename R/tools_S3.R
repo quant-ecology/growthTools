@@ -458,6 +458,7 @@ print.growth_fit <- function(object, ...){
 #' @param \dots Additional arguments (not used)
 #' 
 #' @export
+#' @method predict growth_fit
 predict.growth_fit <- function(object, newdata = NULL, ...) {
   
   # if not requesting predictions for new data (on time steps)

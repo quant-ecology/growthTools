@@ -4,7 +4,7 @@
 \alias{predict.growth_fit}
 \title{Generic predict method for growth_fit object}
 \usage{
-predict.growth_fit(object, newdata = NULL, ...)
+\method{predict}{growth_fit}(object, newdata = NULL, ...)
 }
 \arguments{
 \item{object}{Object of class growth_fit}
