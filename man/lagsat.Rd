@@ -6,7 +6,7 @@
 \alias{sat}
 \alias{satdecay}
 \alias{flr}
-\title{Equations for modeling abundance time series}
+\title{Piecewise linear equations for modeling abundance time series}
 \usage{
 lagsat(x, a, b, B1, B2, s = 1e-10)
 
@@ -41,18 +41,21 @@ Intended to allow the extraction of exponential growth rates from time series
 while accounting for the presence of initial lags in growth, saturating abundances,
 or both in the same time series. These equations provide smoothed piecewise linear
 functions, where lagged or saturated portions of the time series maintain constant 
-abundance, and elsewhere log(abundance) increases linearly.
+abundance, and elsewhere log(abundance) increases linearly. Piecewise linear
+functions are reasonable approximations of more complex, nonlinear/ODE dynamics
+under certain limiting assumptions (e.g., growth limited by a single resource
+with Monod dynamics, especially when resource depletion happens quickly).
 }
 \details{
-This approach for lag, saturation, and lag+saturation are based on:
+This approach is based on:
 https://stats.stackexchange.com/questions/149627/piecewise-regression-with-constraints
 which invokes a smooth approximation to a piecewise linear function,
 where parameter s determines the smoothness around break-points. Generally, as s->0 
 this smooth model approximates more closely the piecewise linear one. The s term 
 could be fit explicitly, but for now it is fixed at a small number (1E-10).
 
-Note: Currently, only the linear model without lag or saturation can produce negative
-growth rate estimates. The lagged/saturating models will be extended to allow this 
+Note: Currently, only the linear, flr, or satdecay models can produce negative
+growth rate estimates. The lagged/saturating models may be extended to allow this 
 possibility in future versions of this package.
 }
 \section{Functions}{
