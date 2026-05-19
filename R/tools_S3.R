@@ -163,7 +163,7 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = NA,
-      nmax = NA
+      nmax = sat(coef(fit)["B2"],a = coef(fit)["a"],b = coef(fit)["b"],B2 = coef(fit)["B2"])
     )
   )
   return(results)
@@ -195,7 +195,8 @@ evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = NA,
-      nmax = NA
+      nmax = nmax = lagsat(coef(fit)["B2"],a = coef(fit)["a"], b = coef(fit)["b"],
+                           B1 = coef(fit)["B1"], B2 = coef(fit)["B2"])
     )
   )
   return(results)
