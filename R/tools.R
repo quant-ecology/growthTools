@@ -195,27 +195,12 @@ derive.satdecay.stats <- function(cfs, r0=10){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a linear model regressing ln(abundance) on time
 #' 
 #' @export
-get.gr.linear<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.linear<-function(x,y){
   lm1<-stats::lm(y~x)
-  
-  if(plotQ){
-    if(!is.na(fpath)){
-      grDevices::pdf(fpath)
-      graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-      graphics::abline(lm1,col='red')
-      grDevices::dev.off()
-    }else{
-      graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-      graphics::abline(lm1,col='red')
-    }
-  }
   
   return(lm1)
 }
@@ -228,9 +213,6 @@ get.gr.linear<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a nonlinear least-squares regression model
 #' 
@@ -256,22 +238,6 @@ get.gr.lag<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.lag,"condition"))
     }
     #print('fit.lag failed after two tries')
-  }else{
-    cfs<-data.frame(t(coef(fit.lag)))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(lag(x,cfs$a,cfs$b,cfs$B1,s=1E-10),min(x),max(x),n = 400,add=TRUE,col='blue')
-        graphics::curve(lag(x,cfs$a,cfs$b,cfs$B1,s=1E-10),cfs$B1,max(x),n = 400,add=TRUE,col='red')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(lag(x,cfs$a,cfs$b,cfs$B1,s=1E-10),min(x),max(x),n = 400,add=TRUE,col='blue')
-        graphics::curve(lag(x,cfs$a,cfs$b,cfs$B1,s=1E-10),cfs$B1,max(x),n = 400,add=TRUE,col='red')
-      }
-    }
   }
 
   return(fit.lag)
@@ -285,9 +251,6 @@ get.gr.lag<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a nonlinear least-squares regression model
 #' 
@@ -316,23 +279,7 @@ get.gr.sat<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.sat,"condition"))
     }
     #print('fit.sat failed after two tries')
-  }else{
-    cfs<-data.frame(t(coef(fit.sat)))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(sat(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(sat(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(sat(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(sat(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-      }
-    }
-  }  
+  } 
   
   return(fit.sat)
 }
@@ -347,9 +294,6 @@ get.gr.sat<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a nonlinear least-squares regression model
 #' 
@@ -386,23 +330,7 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.satdecay,"condition"))
     }
     #print('fit.satdecay failed after two tries')
-  }else{
-    cfs<-data.frame(t(coef(fit.satdecay)))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(satdecay(x,cfs$a,cfs$b,cfs$b2,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-      }
-    }
-  }  
+  }
   
   return(fit.satdecay)
 }
@@ -423,9 +351,6 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns an mle2 regression model
 #' 
@@ -528,29 +453,6 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.satdecay.ode,"condition"))
     }
     print('fit.satdecay.ode failed after two tries')
-  }else{ # take desired actions on obtaining a successful fit
-    
-    # augment results with derived parameters of interest?
-    
-    # back transform coefficients
-    tcoef<-function(cfs){
-      vec<-c(exp(cfs[1]),exp(cfs[2]),1 / (1 + exp(-cfs[3])),exp(cfs[4]),cfs[5],exp(cfs[6]))
-      names(vec)<-c('alpha','vmax','c','d','n0','sigma')
-      vec
-    }
-    cfs<-data.frame(t(tcoef(coef(fit.satdecay.ode))))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0),min(x),max(x),add=TRUE,col='blue')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0),min(x),max(x),add=TRUE,col='blue')
-      }
-    }
   }
   
   return(fit.satdecay.ode)
@@ -566,9 +468,6 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a nonlinear least-squares regression model
 #' 
@@ -592,23 +491,8 @@ get.gr.flr<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.flr,"condition"))
     }
     #print('fit.flr failed after two tries')
-  }else{
-    cfs<-data.frame(t(coef(fit.flr)))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(flr(x,cfs$a,cfs$b,cfs$B2,s=1E-10),cfs$B2,max(x),add=TRUE,col='blue')
-        graphics::curve(flr(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(flr(x,cfs$a,cfs$b,cfs$B2,s=1E-10),cfs$B2,max(x),add=TRUE,col='blue')
-        graphics::curve(flr(x,cfs$a,cfs$b,cfs$B2,s=1E-10),min(x),cfs$B2,add=TRUE,col='red')
-      }
-    }
   }
+  
   return(fit.flr)
 }
 
@@ -622,9 +506,6 @@ get.gr.flr<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param plotQ logical; should the fit be plotted?
-#' @param fpath character; path specifying where plot should be saved, if generated
-#' @param id Label corresponding to the population/strain/species of interest
 #' 
 #' @return This function returns a nonlinear least-squares regression model
 #' 
@@ -648,23 +529,8 @@ get.gr.lagsat<-function(x,y,plotQ=F,fpath=NA,id=''){
       print(attr(fit.lagsat,"condition"))
     }
     #print('fit.lagsat failed after two tries')
-  }else{
-    cfs<-data.frame(t(coef(fit.lagsat)))
-    
-    if(plotQ){
-      if(!is.na(fpath)){
-        grDevices::pdf(fpath)
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(lagsat(x,cfs$a,cfs$b,cfs$B1,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(lagsat(x,cfs$a,cfs$b,cfs$B1,cfs$B2,s=1E-10),cfs$B1,cfs$B2,add=TRUE,col='red')
-        grDevices::dev.off()
-      }else{
-        graphics::plot(y~x,xlab='Time (days)',ylab='ln(fluorescence)',main=id)
-        graphics::curve(lagsat(x,cfs$a,cfs$b,cfs$B1,cfs$B2,s=1E-10),min(x),max(x),add=TRUE,col='blue')
-        graphics::curve(lagsat(x,cfs$a,cfs$b,cfs$B1,cfs$B2,s=1E-10),cfs$B1,cfs$B2,add=TRUE,col='red')
-      }
-    }
   }
+  
   return(fit.lagsat)
 }
 

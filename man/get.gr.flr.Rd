@@ -10,12 +10,6 @@ get.gr.flr(x, y, plotQ = F, fpath = NA, id = "")
 \item{x}{Time steps}
 
 \item{y}{ln(abundance)}
-
-\item{plotQ}{logical; should the fit be plotted?}
-
-\item{fpath}{character; path specifying where plot should be saved, if generated}
-
-\item{id}{Label corresponding to the population/strain/species of interest}
 }
 \value{
 This function returns a nonlinear least-squares regression model
