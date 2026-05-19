@@ -732,12 +732,14 @@ plot.growth_rate_result <- function(object,...) {
   plot(object$best, main = paste("Best model:",object$best$model$name), ...)
 }
 
+
 #' Predict method for best model in the suite of growth rate results
 #' 
 #' @param object Object of class growth_rate_result
 #' @param \dots Additional arguments (not used)
 #' 
 #' @export
+#' @method predict growth_rate_result
 predict.growth_rate_result <- function(object,...) {
   predict(object$best, ...)
 }

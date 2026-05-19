@@ -4,7 +4,7 @@
 \alias{predict.growth_rate_result}
 \title{Predict method for best model in the suite of growth rate results}
 \usage{
-predict.growth_rate_result(object, ...)
+\method{predict}{growth_rate_result}(object, ...)
 }
 \arguments{
 \item{object}{Object of class growth_rate_result}
