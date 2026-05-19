@@ -11,26 +11,26 @@
 \alias{predict_model.satdecay_ode_model}
 \title{Prediction methods for growth models}
 \usage{
-predict_model(model, fit, newdata, ...)
+predict_model(model, object, newdata, ...)
 
-\method{predict_model}{linear}(model, fit, newdata, ...)
+\method{predict_model}{linear}(model, object, newdata, ...)
 
-\method{predict_model}{lag}(model, fit, newdata, ...)
+\method{predict_model}{lag}(model, object, newdata, ...)
 
-\method{predict_model}{sat}(model, fit, newdata, ...)
+\method{predict_model}{sat}(model, object, newdata, ...)
 
-\method{predict_model}{lagsat}(model, fit, newdata, ...)
+\method{predict_model}{lagsat}(model, object, newdata, ...)
 
-\method{predict_model}{flr}(model, fit, newdata, ...)
+\method{predict_model}{flr}(model, object, newdata, ...)
 
-\method{predict_model}{satdecay}(model, fit, newdata, ...)
+\method{predict_model}{satdecay}(model, object, newdata, ...)
 
-\method{predict_model}{satdecay_ode_model}(model, fit, newdata, ...)
+\method{predict_model}{satdecay_ode_model}(model, object, newdata, ...)
 }
 \arguments{
 \item{model}{Growth model type}
 
-\item{fit}{Fit of particular growth model type to the data, from fit_model}
+\item{object}{growth_fit object (produced by run_growth_model, must include results of evaluate_model)}
 
 \item{newdata}{New data (if any) used for making predictions; must contain column named 'x' for time values}
 

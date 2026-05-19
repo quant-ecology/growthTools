@@ -483,7 +483,7 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
   
   # otherwise use model to make new predictions, given newdata
   model <- object$model
-  predict_model(model, object$fit, newdata, ...)
+  predict_model(model, object, newdata, ...)
 }
 
 
@@ -496,65 +496,65 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
 #' functions. All of these are ultimately accessed through predict.growth_fit().
 #' 
 #' @param model Growth model type
-#' @param fit Fit of particular growth model type to the data, from fit_model
+#' @param object growth_fit object (produced by run_growth_model, must include results of evaluate_model)
 #' @param newdata New data (if any) used for making predictions; must contain column named 'x' for time values
 #' @param \dots Additional arguments passed to fitting function (not used?)
 #' 
 #' @export
-predict_model <- function(model, fit, newdata, ...) {
+predict_model <- function(model, object, newdata, ...) {
   UseMethod("predict_model")
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.linear <- function(model, fit, newdata, ...) {
-  predict(fit, newdata = newdata)
+predict_model.linear <- function(model, object, newdata, ...) {
+  predict(object$fit, newdata = newdata)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.lag <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef
+predict_model.lag <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   lag(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.sat <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef
+predict_model.sat <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   sat(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.lagsat <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef
+predict_model.lagsat <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   lagsat(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, B2 = cfs$B2, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.flr <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef
+predict_model.flr <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   flr(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.satdecay <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef
+predict_model.satdecay <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef
   #cfs <- as.list(coef(fit))
   satdecay(newdata$x, a  = cfs$a, b  = cfs$b, b2 = cfs$b2, B2 = cfs$B2, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
-predict_model.satdecay_ode_model <- function(model, fit, newdata, ...) {
-  cfs <- fit$results$coef #extract_satdecay_coefs(fit)
+predict_model.satdecay_ode_model <- function(model, object, newdata, ...) {
+  cfs <- object$results$coef #extract_satdecay_coefs(fit)
   satdecay.ode(newdata$x, cfs$alpha, cfs$vmax, cfs$c, cfs$d, 10, cfs$n0)
 }
 
