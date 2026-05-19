@@ -472,7 +472,7 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
   }
   
   # check for viable fit:
-  if (is.null(object$fit)) {
+  if (is.null(object$fit) || is.na(object$fit)) {
     return(rep(NA, nrow(newdata))) # if none, return NAs
   }
   
