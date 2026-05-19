@@ -218,7 +218,7 @@ get.gr.linear<-function(x,y){
 #' 
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
-get.gr.lag<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.lag<-function(x,y){
   
   data<-data.frame(x=x,y=y)
   #slopes <- zoo::rollapply(data, 3, localslope, by.column=F)
@@ -256,7 +256,7 @@ get.gr.lag<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
-get.gr.sat<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.sat<-function(x,y){
   
   data<-data.frame(x=x,y=y)
   slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)
@@ -299,7 +299,7 @@ get.gr.sat<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
-get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.satdecay<-function(x,y){
   
   data<-data.frame(x=x,y=y)
   slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)
@@ -356,7 +356,7 @@ get.gr.satdecay<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
-get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.satdecay.ode<-function(x,y){
   
   # make sure Julia is accessible
   ensure_julia()
@@ -474,7 +474,7 @@ get.gr.satdecay.ode<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
 #' @import zoo
-get.gr.flr<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.flr<-function(x,y){
   
   data<-data.frame(x=x,y=y)
   slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)
@@ -511,7 +511,7 @@ get.gr.flr<-function(x,y,plotQ=F,fpath=NA,id=''){
 #' 
 #' @export
 #' @importFrom minpack.lm nlsLM nls.lm.control
-get.gr.lagsat<-function(x,y,plotQ=F,fpath=NA,id=''){
+get.gr.lagsat<-function(x,y){
   
   data<-data.frame(x=x,y=y)
   #slopes <- zoo::rollapply(data.frame(x=x,y=y), 3, localslope, by.column=F)

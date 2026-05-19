@@ -103,7 +103,8 @@ evaluate_model.linear_model <- function(model, fit, x, y, ...) {
       post_n = NA,
       post_r2 = NA,
       tmax = NA,
-      nmax = NA
+      nmax = NA,
+      decay_rate = NA
     )
   )
   return(results)
@@ -133,7 +134,8 @@ evaluate_model.lag_model <- function(model, fit, x, y, ...) {
       post_n = NA,
       post_r2 = NA,
       tmax = NA,
-      nmax = NA
+      nmax = NA,
+      decay_rate = NA
     )
   )
   return(results)
@@ -163,7 +165,9 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = NA,
-      nmax = sat(coef(fit)["B2"],a = coef(fit)["a"],b = coef(fit)["b"],B2 = coef(fit)["B2"])
+      nmax = sat(coef(fit)["B2"],a = coef(fit)["a"],
+                 b = coef(fit)["b"],B2 = coef(fit)["B2"]),
+      decay_rate = NA
     )
   )
   return(results)
@@ -196,7 +200,8 @@ evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = NA,
       nmax = lagsat(coef(fit)["B2"],a = coef(fit)["a"], b = coef(fit)["b"],
-                           B1 = coef(fit)["B1"], B2 = coef(fit)["B2"])
+                           B1 = coef(fit)["B1"], B2 = coef(fit)["B2"]),
+      decay_rate = NA
     )
   )
   return(results)
@@ -226,7 +231,8 @@ evaluate_model.flr_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = NA,
-      nmax = NA
+      nmax = NA,
+      decay_rate = unname(coef(fit)["b"])
     )
   )
   return(results)
@@ -259,7 +265,8 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = cfs$B2,
-      nmax = cfs$a + cfs$b*cfs$B2
+      nmax = cfs$a + cfs$b*cfs$B2,
+      decay_rate = unname(coef(fit)["b2"])
     )
   )
   return(results)
@@ -304,7 +311,8 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
       post_n = sum(post_idx),
       post_r2 = get.R2(preds[post_idx], y[post_idx]),
       tmax = derived$tmax,
-      nmax = derived$nmax
+      nmax = derived$nmax,
+      decay_rate = -cfs$vmax*cfs$d
     )
   )
   return(results)
@@ -472,13 +480,15 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
     stop("newdata must be a data frame (in predict.growth_fit())")
   }
   
-  print(length(object$fit))
-  print(object$fit)
-  
   # check for viable fit:
-  if (length(object$fit) == 1 && (is.null(object$fit) || is.na(object$fit))) {
-    return(rep(NA, nrow(newdata))) # if none, return NAs
+  if (length(object$fit) == 1){
+    if(is.null(object$fit) || is.na(object$fit)){
+      return(rep(NA, nrow(newdata))) # if none, return NAs
+    }
   }
+#  if (length(object$fit) == 1 && (is.null(object$fit) || is.na(object$fit))) {
+#    return(rep(NA, nrow(newdata))) # if none, return NAs
+#  }
   
   # require x column
   if (!"x" %in% names(newdata)) {
@@ -519,7 +529,6 @@ predict_model.linear_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.lag_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  #cfs <- as.list(coef(fit))
   lag(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, s  = 1E-10)
 }
 
@@ -527,7 +536,6 @@ predict_model.lag_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.sat_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  #cfs <- as.list(coef(fit))
   sat(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
 }
 
@@ -535,7 +543,6 @@ predict_model.sat_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.lagsat_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  #cfs <- as.list(coef(fit))
   lagsat(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, B2 = cfs$B2, s  = 1E-10)
 }
 
@@ -543,7 +550,6 @@ predict_model.lagsat_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.flr_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  #cfs <- as.list(coef(fit))
   flr(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
 }
 
@@ -551,14 +557,13 @@ predict_model.flr_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.satdecay_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  #cfs <- as.list(coef(fit))
   satdecay(newdata$x, a  = cfs$a, b  = cfs$b, b2 = cfs$b2, B2 = cfs$B2, s  = 1E-10)
 }
 
 #' @rdname predict_model
 #' @export
 predict_model.satdecay_ode_model <- function(model, object, newdata, ...) {
-  cfs <- object$results$coef #extract_satdecay_coefs(fit)
+  cfs <- object$results$coef
   satdecay.ode(newdata$x, cfs$alpha, cfs$vmax, cfs$c, cfs$d, 10, cfs$n0)
 }
 
@@ -634,7 +639,8 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
           post_n = NA,
           post_r2 = NA,
           tmax = NA,
-          nmax = NA
+          nmax = NA,
+          decay_rate = NA
         )
       ),
       status = stage,
@@ -780,7 +786,8 @@ glance.growth_rate_result <- function(object, ...) {
     se = object$best$results$metrics$se,
     slope_n = object$best$results$metrics$slope_n,
     slope_r2 = object$best$results$metrics$slope_r2,
-    nmax = object$best$results$metrics$nmax
+    nmax = object$best$results$metrics$nmax,
+    decay_rate = object$best$results$metrics$decay_rate
   )
 }
 
@@ -842,13 +849,10 @@ make_model <- function(name) {
 #' 
 #' @param x Time steps
 #' @param y ln(abundance)
-#' @param id Label corresponding to the population/strain/species of interest; used to determine the title and file name of saved plot, if any.
 #' @param methods Must be a character vector containing one or more of \code{'linear'}, \code{'lag'}, \code{'sat'}, \code{'flr'}, or \code{'lagsat'}
 #' @param model.selection control parameter to specify which IC metric to use in model selection; default is AICc, which corrects for small sample sizes and converges asymptotically on AIC.
 #' @param min.exp.obs control parameter specifying the minimum number of observations that must fall within the estimated exponential phase in order to consider lag, sat, lagsat, and flr models; defaults to 3.
 #' @param internal.r2.cutoff control parameter specifying the R2 criteria that may be applied to drop fits where the number of observations in the exponential portion is equal to 3. The default value of zero permits all fits of 3 obs to be considered.
-#' @param plot.best.Q logical; should the best fitting model be plotted?
-#' @param fpath character; if best model is to be plotted, provide the file path for saving the plot
 #' @param zero.time if TRUE, shift time axis so that each time series starts at time = 0
 #' 
 #' @return A data frame containing the identity of the best model, the content of the best model, the estimated slopes of the increasing linear portion of the regressions (ie, exponential growth rate), the standard errors associated with these slopes, the IC table used to determine the best model, and the full list of all models fit. See vignette for details.
@@ -865,15 +869,15 @@ make_model <- function(name) {
 #' sdat2<-sdat[sdat$trt=='A',]
 #' 
 #' # calculate growth rate using all available methods:
-#' res<-get.growth.rate(sdat2$dtime,sdat2$ln.fluor,plot.best.Q = TRUE,id = 'Population A')
-#' res$best.model
-#' res$best.slope
+#' res<-get.growth.rate(sdat2$dtime,sdat2$ln.fluor)
+#' res$best$model
+#' res$best$results$metrics$slope
 #' 
 #' @export
-get.growth.rate <- function(x,y,id,
+get.growth.rate <- function(x,y,
     methods = c("linear","lag","sat","flr","lagsat","satdecay","satdecayode"),
     model.selection = "AICc",min.exp.obs = 3,internal.r2.cutoff = 0,
-    plot.best.Q = TRUE, fpath = NA, zero.time = TRUE){
+    zero.time = TRUE){
   
   # Clean data
   keep <- !is.na(y)
