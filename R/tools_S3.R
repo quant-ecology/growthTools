@@ -90,16 +90,23 @@ evaluate_model.linear_model <- function(model, fit, x, y, ...) {
   
   preds <- predict(fit)
   
-  list(
-    slope = unname(coef(fit)[2]),
-    se = unname(sqrt(diag(vcov(fit)))[2]),
-    slope_n = length(x),
-    slope_r2 = get.R2(preds, y),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = NA,
-    post_r2 = NA
+  results<-list(
+    coef = coef(fit),
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)[2]),
+      se = unname(sqrt(diag(vcov(fit)))[2]),
+      slope_n = length(x),
+      slope_r2 = get.R2(preds, y),
+      pre_n = NA,
+      pre_r2 = NA,
+      post_n = NA,
+      post_r2 = NA,
+      tmax = NA,
+      nmax = NA
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -112,17 +119,24 @@ evaluate_model.lag_model <- function(model, fit, x, y, ...) {
   
   exp_idx <- x >= (b1 - 0.1)
   pre_idx <- x <= b1
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = sum(pre_idx),
-    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
-    post_n = NA,
-    post_r2 = NA
+
+  results<-list(
+    coef = coef(fit),
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)["b"]),
+      se = unname(sqrt(diag(vcov(fit)))["b"]),
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = sum(pre_idx),
+      pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+      post_n = NA,
+      post_r2 = NA,
+      tmax = NA,
+      nmax = NA
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -136,16 +150,23 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
   exp_idx <- x <= (b2 + 0.1)
   post_idx <- x >= b2
   
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  results<-list(
+    coef = coef(fit),
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)["b"]),
+      se = unname(sqrt(diag(vcov(fit)))["b"]),
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = NA,
+      pre_r2 = NA,
+      post_n = sum(post_idx),
+      post_r2 = get.R2(preds[post_idx], y[post_idx]),
+      tmax = NA,
+      nmax = NA
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -160,17 +181,24 @@ evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
   exp_idx <- x >= (b1 - 0.1) & x <= (b2 + 0.1)
   pre_idx <- x <= b1
   post_idx <- x >= b2
-  
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = sum(pre_idx),
-    pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
+
+  results<-list(
+    coef = coef(fit),
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)["b"]),
+      se = unname(sqrt(diag(vcov(fit)))["b"]),
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = sum(pre_idx),
+      pre_r2 = get.R2(preds[pre_idx], y[pre_idx]),
+      post_n = sum(post_idx),
+      post_r2 = get.R2(preds[post_idx], y[post_idx]),
+      tmax = NA,
+      nmax = NA
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -184,16 +212,23 @@ evaluate_model.flr_model <- function(model, fit, x, y, ...) {
   exp_idx <- x <= (b2 + 0.1)
   post_idx <- x >= b2
   
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  results<-list(
+    coef = coef(fit),
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)["b"]),
+      se = unname(sqrt(diag(vcov(fit)))["b"]),
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = NA,
+      pre_r2 = NA,
+      post_n = sum(post_idx),
+      post_r2 = get.R2(preds[post_idx], y[post_idx]),
+      tmax = NA,
+      nmax = NA
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -202,21 +237,31 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
   
   preds <- predict(fit)
   
-  b2 <- coef(fit)["B2"]
+  cfs<-coef(fit)
+  
+  #b2 <- coef(fit)["B2"]
+  b2 <- cfs$B2
   
   exp_idx <- x <= (b2 + 0.1)
   post_idx <- x >= b2
   
-  list(
-    slope = unname(coef(fit)["b"]),
-    se = unname(sqrt(diag(vcov(fit)))["b"]),
-    slope_n = sum(exp_idx),
-    slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-    pre_n = NA,
-    pre_r2 = NA,
-    post_n = sum(post_idx),
-    post_r2 = get.R2(preds[post_idx], y[post_idx])
+  results<-list(
+    coef = cfs,
+    preds = preds,
+    metrics = list(
+      slope = unname(coef(fit)["b"]),
+      se = unname(sqrt(diag(vcov(fit)))["b"]),
+      slope_n = sum(exp_idx),
+      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+      pre_n = NA,
+      pre_r2 = NA,
+      post_n = sum(post_idx),
+      post_r2 = get.R2(preds[post_idx], y[post_idx]),
+      tmax = cfs$B2,
+      nmax = cfs$a + cfs$b*cfs$B2
+    )
   )
+  return(results)
 }
 
 #' @rdname evaluate_model
@@ -364,18 +409,20 @@ satdecay_ode_model <- function() {
 #' 
 #' @param model Growth model type
 #' @param fit Actual fit of growth model
+#' @param data List containing the x (time) and y (ln(abundance) data used for fitting
 #' @param results Growth model results, including diagnostics/metrics from evaluating fit
 #' @param status Status of growth model fit and evaluation
 #' @param error Error(s) arising when model fit or evaluation failed
 #' @param growth.rate.valid Does the fit meet conditions for robust growth rate estimate?
 #' 
 #' @export
-new_growth_fit <- function(model,fit,results,status='ok',error=NA,growth.rate.valid = FALSE){
+new_growth_fit <- function(model,fit,data,results,status='ok',error=NA,growth.rate.valid = FALSE){
   
   structure(
     list(
       model = model,
       fit = fit,
+      data = data,
       results = results,
       status = status,
       error = error,
@@ -403,6 +450,22 @@ print.growth_fit <- function(object, ...){
   }
 }
 
+#' Print method for growth_fit object
+#' 
+#' @param object Object of class growth_fit
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+predict.growth_fit <- function(object, newdata = NULL, ...) {
+  
+  if (is.null(newdata)) {
+    return(object$results$preds)
+  }
+  
+  model <- object$model
+  
+  predict_model(model, object$fit, newdata, ...)
+}
 
 #' Fit and evaluate specific growth rate model
 #' 
@@ -422,12 +485,13 @@ print.growth_fit <- function(object, ...){
 run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
   
   # helper function in case of fit failure:
-  fail_fit <- function(stage, err = NA, x=x){
+  fail_fit <- function(stage, err = NA, x=x, y=y){
     n <- length(x)
-    
+
     new_growth_fit(
       model = model,
-      fit = NULL,
+      fit = NA,
+      data = list(x=x,y=y),
       results = list(
         coef = NA,
         preds = rep(NA,n),
@@ -442,7 +506,7 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
           post_r2 = NA,
           tmax = NA,
           nmax = NA
-        ),
+        )
       ),
       status = stage,
       error = err,
@@ -454,7 +518,7 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
   fit <- try(fit_model(model, x, y), silent = TRUE)
   
   if(inherits(fit, "try-error")) {
-    return(fail_fit(stage="fit_failed", err=attr(fit, "condition"),x=x))
+    return(fail_fit(stage="fit_failed", err=attr(fit, "condition"),x=x,y=y))
   }
   
   # If fit succeeded, can evaluate the model:
@@ -463,7 +527,7 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
   # Note: this is probably too severe? what if only some metrics can't be calculated?
   # this would blank all of them out in the event of any error...
   if(inherits(results, "try-error")) {
-    return(fail_fit(stage = "evaluation_failed",err = attr(results, "condition"),x=x))
+    return(fail_fit(stage = "evaluation_failed",err = attr(results, "condition"),x=x,y=y))
   }
   
   # check whether fit has properties that are sufficient for the growth rate 
@@ -482,6 +546,7 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
   new_growth_fit(
     model = model,
     fit = fit,
+    data = list(x=x,y=y),
     results = results,
     status = "ok",
     error = NA,
@@ -523,9 +588,9 @@ print.growth_rate_result <- function(object, ...) {
   cat("====================================\n\n")
   
   cat("Best Model:", object$best$model$name, "\n")
-  cat("Slope:", object$best$slope, "\n")
-  cat("SE:", object$best$se, "\n")
-  cat("Slope R2:", object$best$slope_r2, "\n")
+  cat("Slope:", object$best$results$metrics$slope, "\n")
+  cat("SE:", object$best$results$metrics$se, "\n")
+  cat("Slope R2:", object$best$results$metrics$slope_r2, "\n")
   cat("\n")
   
   print(object$ictab)
@@ -558,10 +623,11 @@ glance.growth_rate_result <- function(object, ...) {
   
   tibble::tibble(
     best_model = object$best$model$name,
-    slope = object$best$slope,
-    se = object$best$se,
-    slope_n = object$best$slope_n,
-    slope_r2 = object$best$slope_r2
+    slope = object$best$results$metrics$slope,
+    se = object$best$results$metrics$se,
+    slope_n = object$best$results$metrics$slope_n,
+    slope_r2 = object$best$results$metrics$slope_r2,
+    nmax = object$best$results$metrics$nmax
   )
 }
 
@@ -689,7 +755,10 @@ get.growth.rate <- function(x,y,id,
   
   # which worked?
   successful <- Filter(
-    Negate(is.null),
+    function(x) {
+      !is.null(x) &&
+        isTRUE(x$growth.rate.valid)
+    },
     results
   )
   
@@ -699,7 +768,7 @@ get.growth.rate <- function(x,y,id,
   
   # Model comparison, using only models that successfully fit
   mod.list <- lapply(successful, function(x) x$fit)
-  
+
   mod.names <- sapply(
     successful,
     function(x) x$model$name
@@ -715,12 +784,14 @@ get.growth.rate <- function(x,y,id,
     
     AICc = bbmle::AICctab(
       mod.list,
-      mnames = mod.names
+      mnames = mod.names,
+      nobs=length(x)
     ),
     
     BIC = bbmle::BICtab(
       mod.list,
-      mnames = mod.names
+      mnames = mod.names,
+      nobs=length(x)
     ),
     
     stop("Invalid model.selection")
