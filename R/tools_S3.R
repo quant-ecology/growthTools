@@ -273,12 +273,13 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   
   # extract and back transform coefficients
   tcoef<-function(cfs){
-    vec<-c(alpha=exp(cfs[1]), vmax=exp(cfs[2]), c=1 / (1 + exp(-cfs[3])),
-           d=exp(cfs[4]), n0=cfs[5], sigma=exp(cfs[6]))
+    cfs<-as.list(cfs)
+    vec<-c(alpha=exp(cfs$log_alpha), vmax=exp(cfs$log_vmax), c=1 / (1 + exp(-cfs$theta_c)),
+           d=exp(cfs$log_d), n0=cfs$n0, sigma=exp(cfs$log_sigma))
     as.list(vec)
   }
   cfs <- tcoef(coef(fit))
-  
+
   # calculate predicted values using these coefficients from the fit:
   preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
   
@@ -450,22 +451,112 @@ print.growth_fit <- function(object, ...){
   }
 }
 
-#' Print method for growth_fit object
+#' Generic predict method for growth_fit object
 #' 
 #' @param object Object of class growth_fit
+#' @param newdata New data (if any) to use for making predictions
 #' @param \dots Additional arguments (not used)
 #' 
 #' @export
 predict.growth_fit <- function(object, newdata = NULL, ...) {
   
+  # if not requesting predictions for new data (on time steps)
   if (is.null(newdata)) {
     return(object$results$preds)
   }
   
-  model <- object$model
+  # require data frame
+  if (!is.data.frame(newdata)) {
+    stop("newdata must be a data frame (in predict.growth_fit())")
+  }
   
+  # check for viable fit:
+  if (is.null(object$fit)) {
+    return(rep(NA, nrow(newdata))) # if none, return NAs
+  }
+  
+  # require x column
+  if (!"x" %in% names(newdata)) {
+    stop("newdata must contain column 'x' (in predict.growth_fit())")
+  }
+  
+  # otherwise use model to make new predictions, given newdata
+  model <- object$model
   predict_model(model, object$fit, newdata, ...)
 }
+
+
+#' Prediction methods for growth models
+#' 
+#' A suite of growth models is available which can be fit to time series of 
+#' ln(abundance) over time and used to estimate population exponential growth
+#' rate. The generic method for generating predictions from these growth_fit
+#' objects, predict_model(), dispatches to growth model specific prediction
+#' functions. All of these are ultimately accessed through predict.growth_fit().
+#' 
+#' @param model Growth model type
+#' @param fit Fit of particular growth model type to the data, from fit_model
+#' @param newdata New data (if any) used for making predictions; must contain column named 'x' for time values
+#' @param \dots Additional arguments passed to fitting function (not used?)
+#' 
+#' @export
+predict_model <- function(model, fit, newdata, ...) {
+  UseMethod("predict_model")
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.linear <- function(model, fit, newdata, ...) {
+  predict(fit, newdata = newdata)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.lag <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef
+  #cfs <- as.list(coef(fit))
+  lag(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, s  = 1E-10)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.sat <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef
+  #cfs <- as.list(coef(fit))
+  sat(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.lagsat <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef
+  #cfs <- as.list(coef(fit))
+  lagsat(newdata$x, a  = cfs$a, b  = cfs$b, B1 = cfs$B1, B2 = cfs$B2, s  = 1E-10)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.flr <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef
+  #cfs <- as.list(coef(fit))
+  flr(newdata$x, a  = cfs$a, b  = cfs$b, B2 = cfs$B2, s  = 1E-10)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.satdecay <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef
+  #cfs <- as.list(coef(fit))
+  satdecay(newdata$x, a  = cfs$a, b  = cfs$b, b2 = cfs$b2, B2 = cfs$B2, s  = 1E-10)
+}
+
+#' @rdname predict_model
+#' @export
+predict_model.satdecay_ode_model <- function(model, fit, newdata, ...) {
+  cfs <- fit$results$coef #extract_satdecay_coefs(fit)
+  satdecay.ode(newdata$x, cfs$alpha, cfs$vmax, cfs$c, cfs$d, 10, cfs$n0)
+}
+
 
 #' Fit and evaluate specific growth rate model
 #' 
