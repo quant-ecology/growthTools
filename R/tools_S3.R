@@ -559,6 +559,41 @@ predict_model.satdecay_ode_model <- function(model, object, newdata, ...) {
 }
 
 
+#' Generic plotting method for growth_fit object
+#' 
+#' @param object Object of class growth_fit
+#' @param newdata New data (if any) to use for making predictions
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+#' @method plot growth_fit
+plot.growth_fit <- function(object, main = NULL, savepath = NULL, ngrid = 200, ...){
+  
+  obs.x<-object$data$x
+  obs.y<-object$data$y
+
+  xr <- range(obs.x, na.rm = TRUE)
+  
+  grid <- seq(xr[1], xr[2], length.out = ngrid)
+  
+  preds <- predict(object, newdata = data.frame(x=grid))
+  print(length(preds))
+  print(preds)
+  
+  if (!is.null(savepath)) {
+    grDevices::pdf(savepath)
+    on.exit(grDevices::dev.off(), add = TRUE)
+  }
+  
+  graphics::plot(obs.y ~ obs.x,
+    xlab = "Time", ylab = "ln(abundance)", main = main)
+  
+  graphics::lines(preds~grid, col = "blue", lwd = 2)
+
+  invisible(list(grid = grid, preds = preds))
+}
+
+
 #' Fit and evaluate specific growth rate model
 #' 
 #' This generic function fits a specific user-selected growth rate model to time
