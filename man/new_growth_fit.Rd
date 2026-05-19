@@ -7,6 +7,7 @@
 new_growth_fit(
   model,
   fit,
+  data,
   results,
   status = "ok",
   error = NA,
@@ -17,6 +18,8 @@ new_growth_fit(
 \item{model}{Growth model type}
 
 \item{fit}{Actual fit of growth model}
+
+\item{data}{List containing the x (time) and y (ln(abundance) data used for fitting}
 
 \item{results}{Growth model results, including diagnostics/metrics from evaluating fit}
 
