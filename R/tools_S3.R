@@ -91,7 +91,7 @@ evaluate_model.linear_model <- function(model, fit, x, y, ...) {
   preds <- predict(fit)
   
   results<-list(
-    coef = coef(fit),
+    coef = as.list(coef(fit)),
     preds = preds,
     metrics = list(
       slope = unname(coef(fit)[2]),
@@ -121,7 +121,7 @@ evaluate_model.lag_model <- function(model, fit, x, y, ...) {
   pre_idx <- x <= b1
 
   results<-list(
-    coef = coef(fit),
+    coef = as.list(coef(fit)),
     preds = preds,
     metrics = list(
       slope = unname(coef(fit)["b"]),
@@ -151,7 +151,7 @@ evaluate_model.sat_model <- function(model, fit, x, y, ...) {
   post_idx <- x >= b2
   
   results<-list(
-    coef = coef(fit),
+    coef = as.list(coef(fit)),
     preds = preds,
     metrics = list(
       slope = unname(coef(fit)["b"]),
@@ -183,7 +183,7 @@ evaluate_model.lagsat_model <- function(model, fit, x, y, ...) {
   post_idx <- x >= b2
 
   results<-list(
-    coef = coef(fit),
+    coef = as.list(coef(fit)),
     preds = preds,
     metrics = list(
       slope = unname(coef(fit)["b"]),
@@ -213,7 +213,7 @@ evaluate_model.flr_model <- function(model, fit, x, y, ...) {
   post_idx <- x >= b2
   
   results<-list(
-    coef = coef(fit),
+    coef = as.list(coef(fit)),
     preds = preds,
     metrics = list(
       slope = unname(coef(fit)["b"]),
@@ -237,7 +237,7 @@ evaluate_model.satdecay_model <- function(model, fit, x, y, ...) {
   
   preds <- predict(fit)
   
-  cfs<-coef(fit)
+  cfs<-as.list(coef(fit))
   
   #b2 <- coef(fit)["B2"]
   b2 <- cfs$B2
@@ -577,9 +577,7 @@ plot.growth_fit <- function(object, main = NULL, savepath = NULL, ngrid = 200, .
   grid <- seq(xr[1], xr[2], length.out = ngrid)
   
   preds <- predict(object, newdata = data.frame(x=grid))
-  print(length(preds))
-  print(preds)
-  
+
   if (!is.null(savepath)) {
     grDevices::pdf(savepath)
     on.exit(grDevices::dev.off(), add = TRUE)
@@ -723,6 +721,17 @@ print.growth_rate_result <- function(object, ...) {
   print(object$ictab)
 }
 
+
+#' Plot method for best model in the suite of growth rate results
+#' 
+#' @param object Object of class growth_rate_result
+#' @param \dots Additional arguments (not used)
+#' 
+#' @export
+plot.growth_rate_result <- function(object,...) {
+  plot(object$best, main = paste("Best model:",object$best$model$name), ...)
+}
+
 #' Summary method for suite of successful growth rate results
 #' 
 #' @param object Object of class growth_rate_result
@@ -733,10 +742,10 @@ summary.growth_rate_result <- function(object, ...) {
   
   data.frame(
     model = sapply(object$successful, function(x) x$model$name),
-    slope = sapply(object$successful, function(x) x$slope),
-    se = sapply(object$successful, function(x) x$se),
-    slope_n = sapply(object$successful, function(x) x$slope_n),
-    slope_r2 = sapply(object$successful, function(x) x$slope_r2)
+    slope = sapply(object$successful, function(x) x$results$metrics$slope),
+    se = sapply(object$successful, function(x) x$results$metrics$se),
+    slope_n = sapply(object$successful, function(x) x$results$metrics$slope_n),
+    slope_r2 = sapply(object$successful, function(x) x$results$metrics$slope_r2)
   )
 }
 
