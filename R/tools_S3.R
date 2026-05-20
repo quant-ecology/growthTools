@@ -481,14 +481,9 @@ predict.growth_fit <- function(object, newdata = NULL, ...) {
   }
   
   # check for viable fit:
-  if (length(object$fit) == 1){
-    if(is.null(object$fit) || is.na(object$fit)){
-      return(rep(NA, nrow(newdata))) # if none, return NAs
-    }
+  if (is.null(object$fit)) {
+    return(rep(NA_real_, nrow(newdata)))
   }
-#  if (length(object$fit) == 1 && (is.null(object$fit) || is.na(object$fit))) {
-#    return(rep(NA, nrow(newdata))) # if none, return NAs
-#  }
   
   # require x column
   if (!"x" %in% names(newdata)) {
@@ -624,7 +619,7 @@ run_growth_model <- function(model,x,y,min.exp.obs = 3,internal.r2.cutoff = 0){
 
     new_growth_fit(
       model = model,
-      fit = NA,
+      fit = NULL,
       data = list(x=x,y=y),
       results = list(
         coef = NA,
