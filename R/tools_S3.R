@@ -587,10 +587,10 @@ plot.growth_fit <- function(object, main = NULL, savepath = NULL, ngrid = 200, .
     on.exit(grDevices::dev.off(), add = TRUE)
   }
   
-  graphics::plot(obs.y ~ obs.x,
+  graphics::plot(obs.x,obs.y,
     xlab = "Time", ylab = "ln(abundance)", main = main)
   
-  graphics::lines(preds~grid, col = "blue", lwd = 2)
+  graphics::lines(grid,preds, col = "blue", lwd = 2)
 
   invisible(list(grid = grid, preds = preds))
 }
