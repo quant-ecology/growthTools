@@ -46,3 +46,10 @@ fit in different portions of the model (e.g., initial exponential phase vs.
 after saturating). Input follows a common structure, but internals vary by 
 model type.
 }
+\details{
+Note: when satdecayode fails to find an internal maximum abundance over the 
+range of the data (either due to the data itself, or a poor fit), then function
+satdecay.ode.peak.time() returns a tmax of NaN, and output of evaluate_model
+changes. Most metrics are returned as NAs, and the slope provided is the decay
+rate (if resulting curve is a linear decline). Further investigation is warranted
+}

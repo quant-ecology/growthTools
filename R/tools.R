@@ -182,10 +182,15 @@ satdecay.ode.peak.time <- function(cfs, r0=10, tmax=100){
 #' @export
 derive.satdecay.stats <- function(cfs, r0=10){
   
+  # recall, tmax may be returned as NaN if no internal tmax is identified.
   tmax <- satdecay.ode.peak.time(cfs)
-  
-  nmax <- satdecay.ode(tmax,cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0 = r0,n0 = cfs$n0)
-  
+
+  if(!is.nan(tmax)){
+    nmax <- satdecay.ode(tmax,cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0 = r0,n0 = cfs$n0)    
+  }else{
+    nmax <- NA
+  }
+
   list(tmax = tmax,nmax = nmax)
 }
 

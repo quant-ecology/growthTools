@@ -73,6 +73,12 @@ fit_model.satdecay_ode_model <- function(model, x, y, ...) {
 #' after saturating). Input follows a common structure, but internals vary by 
 #' model type.
 #' 
+#' Note: when satdecayode fails to find an internal maximum abundance over the 
+#' range of the data (either due to the data itself, or a poor fit), then function
+#' satdecay.ode.peak.time() returns a tmax of NaN, and output of evaluate_model
+#' changes. Most metrics are returned as NAs, and the slope provided is the decay
+#' rate (if resulting curve is a linear decline). Further investigation is warranted
+#' 
 #' @param model Growth model type
 #' @param fit Actual fit of growth model
 #' @param x Time variable
@@ -293,28 +299,52 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   
   # Numerical estimate of peak abundance
   derived <- derive.satdecay.stats(cfs,r0 = 10)
-  #tmax.est<-satdecay.ode.peak.time(cfs)
   
-  exp_idx <- x <= (derived$tmax + 0.1)
-  post_idx <- x >= derived$tmax
-  
-  results<-list(
-    coef = cfs,
-    preds = preds,
-    metrics = list(
-      slope = cfs$vmax * (1 - cfs$d), 
-      se = NA, #need to figure out calculation of se for this composite parameter
-      slope_n = sum(exp_idx),
-      slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
-      pre_n = NA,
-      pre_r2 = NA,
-      post_n = sum(post_idx),
-      post_r2 = get.R2(preds[post_idx], y[post_idx]),
-      tmax = derived$tmax,
-      nmax = derived$nmax,
-      decay_rate = -cfs$vmax*cfs$d
+  # if we didn't find an nmax/tmax
+  if(is.nan(derived$tmax)){
+    exp_idx <- x <= (derived$tmax + 0.1)
+    post_idx <- x >= derived$tmax
+    
+    results<-list(
+      coef = cfs,
+      preds = preds,
+      metrics = list(
+        slope = cfs$vmax * (1 - cfs$d), 
+        se = NA, #need to figure out calculation of se for this composite parameter
+        slope_n = sum(exp_idx),
+        slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+        pre_n = NA,
+        pre_r2 = NA,
+        post_n = sum(post_idx),
+        post_r2 = get.R2(preds[post_idx], y[post_idx]),
+        tmax = derived$tmax,
+        nmax = derived$nmax,
+        decay_rate = NA
+      )
     )
-  )
+  }else{
+    exp_idx <- x <= (derived$tmax + 0.1)
+    post_idx <- x >= derived$tmax
+    
+    results<-list(
+      coef = cfs,
+      preds = preds,
+      metrics = list(
+        slope = cfs$vmax * (1 - cfs$d), 
+        se = NA, #need to figure out calculation of se for this composite parameter
+        slope_n = sum(exp_idx),
+        slope_r2 = get.R2(preds[exp_idx], y[exp_idx]),
+        pre_n = NA,
+        pre_r2 = NA,
+        post_n = sum(post_idx),
+        post_r2 = get.R2(preds[post_idx], y[post_idx]),
+        tmax = derived$tmax,
+        nmax = derived$nmax,
+        decay_rate = -cfs$vmax*cfs$d
+      )
+    )
+  }
+  
   return(results)
 }
 
