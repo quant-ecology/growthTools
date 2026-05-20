@@ -4,7 +4,7 @@
 \alias{get.gr.lag}
 \title{Extract exponential growth rate assuming lagged exponential growth}
 \usage{
-get.gr.lag(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.lag(x, y)
 }
 \arguments{
 \item{x}{Time steps}

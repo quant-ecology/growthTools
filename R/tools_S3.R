@@ -730,13 +730,22 @@ print.growth_rate_result <- function(object, ...) {
 #' Plot method for best model in the suite of growth rate results
 #' 
 #' @param object Object of class growth_rate_result
+#' @param main Plot title; defaults to name of best model
 #' @param \dots Additional arguments (not used)
 #' 
 #' @export
-plot.growth_rate_result <- function(object,...) {
-  plot(object$best, main = paste("Best model:",object$best$model$name), ...)
+plot.growth_rate_result <- function(object, main = NULL, ...) {
+  
+  model_label <- paste("Best model:", object$best$model$name)
+  
+  if (is.null(main)) {
+    main <- model_label
+  } else {
+    main <- paste(main, "-", model_label)
+  }
+  
+  plot(object$best, main = main, ...)
 }
-
 
 #' Predict method for best model in the suite of growth rate results
 #' 

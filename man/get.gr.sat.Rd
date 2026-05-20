@@ -4,7 +4,7 @@
 \alias{get.gr.sat}
 \title{Extract exponential growth rate assuming exponential growth that saturates}
 \usage{
-get.gr.sat(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.sat(x, y)
 }
 \arguments{
 \item{x}{Time steps}

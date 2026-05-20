@@ -5,7 +5,7 @@
 \title{Extract exponential growth rate assuming exponential growth that saturates and 
 then decays using full ODE fitting}
 \usage{
-get.gr.satdecay.ode(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.satdecay.ode(x, y)
 }
 \arguments{
 \item{x}{Time steps}

@@ -4,10 +4,12 @@
 \alias{plot.growth_rate_result}
 \title{Plot method for best model in the suite of growth rate results}
 \usage{
-\method{plot}{growth_rate_result}(object, ...)
+\method{plot}{growth_rate_result}(object, main = NULL, ...)
 }
 \arguments{
 \item{object}{Object of class growth_rate_result}
+
+\item{main}{Plot title; defaults to name of best model}
 
 \item{\dots}{Additional arguments (not used)}
 }

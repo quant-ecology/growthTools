@@ -5,7 +5,7 @@
 \title{Extract exponential growth rate assuming exponential growth that saturates and 
 then decays}
 \usage{
-get.gr.satdecay(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.satdecay(x, y)
 }
 \arguments{
 \item{x}{Time steps}

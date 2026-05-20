@@ -7,13 +7,10 @@
 get.growth.rate(
   x,
   y,
-  id,
   methods = c("linear", "lag", "sat", "flr", "lagsat", "satdecay", "satdecayode"),
   model.selection = "AICc",
   min.exp.obs = 3,
   internal.r2.cutoff = 0,
-  plot.best.Q = TRUE,
-  fpath = NA,
   zero.time = TRUE
 )
 }
@@ -22,8 +19,6 @@ get.growth.rate(
 
 \item{y}{ln(abundance)}
 
-\item{id}{Label corresponding to the population/strain/species of interest; used to determine the title and file name of saved plot, if any.}
-
 \item{methods}{Must be a character vector containing one or more of \code{'linear'}, \code{'lag'}, \code{'sat'}, \code{'flr'}, or \code{'lagsat'}}
 
 \item{model.selection}{control parameter to specify which IC metric to use in model selection; default is AICc, which corrects for small sample sizes and converges asymptotically on AIC.}
@@ -31,10 +26,6 @@ get.growth.rate(
 \item{min.exp.obs}{control parameter specifying the minimum number of observations that must fall within the estimated exponential phase in order to consider lag, sat, lagsat, and flr models; defaults to 3.}
 
 \item{internal.r2.cutoff}{control parameter specifying the R2 criteria that may be applied to drop fits where the number of observations in the exponential portion is equal to 3. The default value of zero permits all fits of 3 obs to be considered.}
-
-\item{plot.best.Q}{logical; should the best fitting model be plotted?}
-
-\item{fpath}{character; if best model is to be plotted, provide the file path for saving the plot}
 
 \item{zero.time}{if TRUE, shift time axis so that each time series starts at time = 0}
 }
@@ -61,8 +52,8 @@ sdat<-data.frame(trt=c(rep('A',10),rep('B',10),rep('C',10),rep('D',10)),
 sdat2<-sdat[sdat$trt=='A',]
 
 # calculate growth rate using all available methods:
-res<-get.growth.rate(sdat2$dtime,sdat2$ln.fluor,plot.best.Q = TRUE,id = 'Population A')
-res$best.model
-res$best.slope
+res<-get.growth.rate(sdat2$dtime,sdat2$ln.fluor)
+res$best$model
+res$best$results$metrics$slope
 
 }

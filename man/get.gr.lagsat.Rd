@@ -4,7 +4,7 @@
 \alias{get.gr.lagsat}
 \title{Extract exponential growth rate assuming lagged exponential growth that saturates}
 \usage{
-get.gr.lagsat(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.lagsat(x, y)
 }
 \arguments{
 \item{x}{Time steps}

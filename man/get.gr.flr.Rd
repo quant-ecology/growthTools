@@ -4,7 +4,7 @@
 \alias{get.gr.flr}
 \title{Extract exponential growth rate assuming exponential death that hits a floor}
 \usage{
-get.gr.flr(x, y, plotQ = F, fpath = NA, id = "")
+get.gr.flr(x, y)
 }
 \arguments{
 \item{x}{Time steps}
