@@ -871,6 +871,50 @@ make_model <- function(name) {
 }
 
 
+#' Check at prepare abundance time series for analysis
+#' 
+#' @param x time values
+#' @param y ln(abundance) values
+#' @param zero.time if TRUE, shift time axis so that each time series starts at time = 0
+#' 
+#' @export
+prepare_growth_data <- function(x, y, zero.time = TRUE) {
+  
+  if (length(x) != length(y)) {
+    stop("x and y must have same length")
+  }
+  
+  keep <- !(is.na(x) | is.na(y))
+  
+  x <- x[keep]
+  y <- y[keep]
+  
+  if (length(x) == 0) {
+    stop("No observations remain after removing missing values")
+  }
+  
+  if (zero.time) {
+    x <- x - min(x)
+  }
+  
+  if (is.unsorted(x)) {
+    warning("x was not sorted; reordering observations by x")
+  }
+  ord <- order(x)
+  
+  x <- x[ord]
+  y <- y[ord]
+  
+  if (length(unique(x)) < 2) {
+    stop("Fewer than two unique time points")
+  }
+  
+  list(
+    x = x,
+    y = y
+  )
+}
+
 
 #' Extract exponential growth rate from a time series of ln(population abundance)
 #' 
@@ -914,20 +958,10 @@ get.growth.rate <- function(x,y,
     zero.time = TRUE){
   
   # Clean data
-  keep <- !is.na(y)
+  dat <- prepare_growth_data(x, y, zero.time = zero.time)
+  x <- dat$x
+  y <- dat$y
   
-  x <- x[keep]
-  y <- y[keep]
-  
-  if (zero.time) {
-    x <- x - min(x, na.rm = TRUE)
-  }
-  
-  if (length(unique(x)) < 2) {
-    stop("Fewer than two unique time points")
-  }
-  
-
   # Set up models
   model_objects <- lapply(methods,make_model)
   
