@@ -401,14 +401,10 @@ get.gr.satdecay.ode<-function(x,y){
   
   # local version of satdecay.ode(), to optimize run time. Uses fixed time vals
   satdecay.ode.local <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
-    # define time range
-    tmax <- max(max(x), 10)
     
     JuliaCall::julia_assign("p_new", c(alpha, vmax, cpar, dpar))
     JuliaCall::julia_assign("u0_new", c(r0, n0))
     
-    # below only works if x is more than one value
-    #vals <- JuliaCall::julia_eval("prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax_global)); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
     vals <- JuliaCall::julia_eval("tspan_new = (0, tmax_global); prob = SciMLBase.ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(),saveat=times_obs,reltol=1e-6, abstol=1e-6,save_everystep=false); Array(sol)[2, :]")
     
     return(vals)
