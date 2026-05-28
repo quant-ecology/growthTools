@@ -618,7 +618,7 @@ plot.growth_fit <- function(object, main = NULL, savepath = NULL, ngrid = 200, .
   }
   
   graphics::plot(obs.x,obs.y,
-    xlab = "Time", ylab = "ln(abundance)", main = main)
+    xlab = "Time", ylab = "ln(abundance)", main = main, ...)
   
   graphics::lines(grid,preds, col = "blue", lwd = 2)
 
