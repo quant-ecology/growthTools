@@ -4,7 +4,7 @@
 \alias{satdecay.ode}
 \title{ODE Equations for modeling abundance time series}
 \usage{
-satdecay.ode(x, alpha, vmax, cpar, dpar, r0, n0)
+satdecay.ode(x, alpha, vmax, cpar, dpar, r0, n0, return.r = FALSE)
 }
 \arguments{
 \item{x}{Time variable}

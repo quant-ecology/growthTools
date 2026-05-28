@@ -109,7 +109,7 @@ flr<-function(x,a,b,B2,s=1E-10){
 #' @return log(abundance) at time x as a function of model parameters
 #' 
 #' @export
-satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
+satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0,return.r=FALSE) {
   
   # make sure Julia is accessible
   ensure_julia()
@@ -133,8 +133,13 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
   
   # now works for x as single value or vector of time points
   #vals <- julia_eval("times = vec(collect(times)); prob = remake(prob_template,u0=u0_new,p=p_new,tspan=(0.0, tmax)); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
-  vals <- JuliaCall::julia_eval("tspan_new = (0, tmax); times = vec(collect(times)); prob = ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
   
+  if(!return.r){
+    vals <- JuliaCall::julia_eval("tspan_new = (0, tmax); times = vec(collect(times)); prob = ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[2] for t in times]")
+  }else{
+    vals <- JuliaCall::julia_eval("tspan_new = (0, tmax); times = vec(collect(times)); prob = ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), reltol=1e-6, abstol=1e-6); Float64[sol(t)[1] for t in times]")    
+  }
+
   # return scalar if scalar supplied
   if (scalar_input) {
     return(vals[[1]])
@@ -149,11 +154,11 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0) {
 #' methods in Julia to calculate the timing of peak ln(abundance).
 #' 
 #' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()
-#' @param r0 Initial resource concentration (set arbitrarily to 10 throughout)
+#' @param r0 Initial resource concentration (set arbitrarily to r0.global by default)
 #' @param tmax Maximum of time domain
 #' 
 #' @export
-satdecay.ode.peak.time <- function(cfs, r0=10, tmax=100){
+satdecay.ode.peak.time <- function(cfs, r0=r0.global, tmax=100){
   # make sure Julia is accessible
   ensure_julia()
   if (!requireNamespace("JuliaCall", quietly = TRUE)) {
@@ -175,12 +180,12 @@ satdecay.ode.peak.time <- function(cfs, r0=10, tmax=100){
 #' methods in Julia to calculate additional values of interest, including peak ln(abundance).
 #' 
 #' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()
-#' @param r0 Initial resource concentration (set arbitrarily to 10 throughout)
+#' @param r0 Initial resource concentration (set arbitrarily to r0.global by default)
 #' 
 #' @return List containing tmax (timing of peak abundance) and nmax (ln(abundance) at tmax)
 #' 
 #' @export
-derive.satdecay.stats <- function(cfs, r0=10){
+derive.satdecay.stats <- function(cfs, r0=r0.global){
   
   # recall, tmax may be returned as NaN if no internal tmax is identified.
   tmax <- satdecay.ode.peak.time(cfs)
@@ -380,16 +385,27 @@ get.gr.satdecay.ode<-function(x,y){
   # initial slope should be ~= vmax*(1-d)
   fit_early <- lm(y[1:3] ~ x[1:3]) 
   slope0 <- coef(fit_early)[2]
-  
+
   # final slope should be ~= -vmax*d
   fit_late <- lm(y[(length(x)-2):length(x)] ~ x[(length(x)-2):length(x)])
   slope_end <- coef(fit_late)[2]
   
   vmax.guess <- slope0 - slope_end
-  d.guess    <- -slope_end / vmax.guess
-  n0.guess <- y[which.min(x)]
-  c.guess <- 0.2
   alpha.guess <- 0.1 * vmax.guess # careful with this one; linked to r0 assumption
+  c.guess <- 0.2
+  d.guess    <- -slope_end / vmax.guess
+  #n0.guess <- y[which.min(x)]
+  n0.guess <- coef(fit_early)[1] # use y-intercept of initial linear slope instead?
+  #print(c(alpha.guess,vmax.guess,c.guess,d.guess,n0.guess))
+  
+  # if d guess is negative/zero, linear approx may be thrown off by few/noisy
+  # values at the end of the time series. Assuming there's enough data, expand
+  # the interval of interest and fit across 4 observations
+  if(d.guess <= 0 & length(x)>4){
+    fit_late <- lm(y[(length(x)-4):length(x)] ~ x[(length(x)-4):length(x)])
+    slope_end <- coef(fit_late)[2]
+    d.guess    <- -slope_end / vmax.guess
+  }
   
   # set up for likelihood calculation:
   JuliaCall::julia_assign("times_obs", x)
@@ -417,7 +433,7 @@ get.gr.satdecay.ode<-function(x,y){
     cpar  <- 1 / (1 + exp(-theta_c))
     dpar  <- exp(log_d)
     sigma <- exp(log_sigma)
-    r0 <- 10 # fixed arbitrarily
+    r0 <- r0.global # fixed arbitrarily
     
     nvals <- satdecay.ode.local(x, alpha, vmax, cpar, dpar, r0, n0)
     

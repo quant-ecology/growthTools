@@ -295,10 +295,10 @@ evaluate_model.satdecay_ode_model <- function(model, fit, x, y, ...) {
   cfs <- tcoef(coef(fit))
 
   # calculate predicted values using these coefficients from the fit:
-  preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,10,cfs$n0)
+  preds<-satdecay.ode(x,cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0.global,cfs$n0)
   
   # Numerical estimate of peak abundance
-  derived <- derive.satdecay.stats(cfs,r0 = 10)
+  derived <- derive.satdecay.stats(cfs,r0 = r0.global)
   
   # if we didn't find an nmax/tmax
   if(is.nan(derived$tmax)){
@@ -589,7 +589,7 @@ predict_model.satdecay_model <- function(model, object, newdata, ...) {
 #' @export
 predict_model.satdecay_ode_model <- function(model, object, newdata, ...) {
   cfs <- object$results$coef
-  satdecay.ode(newdata$x, cfs$alpha, cfs$vmax, cfs$c, cfs$d, 10, cfs$n0)
+  satdecay.ode(newdata$x, cfs$alpha, cfs$vmax, cfs$c, cfs$d, r0.global, cfs$n0)
 }
 
 

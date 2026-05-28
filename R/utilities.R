@@ -157,3 +157,8 @@ ensure_julia <- function() {
   
   assign(".julia_initialized", TRUE, envir = .GlobalEnv)
 }
+
+
+#' Define global parameters
+r0.global <<- 100
+
