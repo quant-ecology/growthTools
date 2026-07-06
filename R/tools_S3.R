@@ -836,10 +836,10 @@ glance.growth_rate_result <- function(object, ...) {
 augment.growth_fit <- function(object, ...) {
   
   tibble::tibble(
-    x = object$x,
-    y = object$y,
-    fitted = predict(object$fit),
-    residual = residuals(object$fit)
+    x = object$data$x,
+    y = object$data$y,
+    fitted = object$results$preds,
+    residual = object$data$y - object$results$preds
   )
 }
 
