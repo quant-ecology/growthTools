@@ -28,7 +28,9 @@ Imports:
     tibble,
     vegan,
     zoo,
-    generics
+    generics,
+    purrr,
+    broom
 Suggests: 
     JuliaCall,
     knitr,
