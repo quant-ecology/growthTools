@@ -20,7 +20,7 @@ A data frame with 160 rows and 8 variables:
 Elena Litchman and Tatiana Severin, W.K. Kellogg Biological Station, Michigan State University
 }
 \usage{
-example_TPC_data
+data(example_TPC_data)
 }
 \description{
 A data set containing estimated growth rates of two phytoplankton isolates across a range

@@ -4,12 +4,10 @@
 \alias{derive.satdecay.stats}
 \title{Derive set of additional traits for satdecayode model}
 \usage{
-derive.satdecay.stats(cfs, r0 = r0.global)
+derive.satdecay.stats(cfs)
 }
 \arguments{
-\item{cfs}{Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()}
-
-\item{r0}{Initial resource concentration (set arbitrarily to r0.global by default)}
+\item{cfs}{Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode(), including r0}
 }
 \value{
 List containing tmax (timing of peak abundance) and nmax (ln(abundance) at tmax)

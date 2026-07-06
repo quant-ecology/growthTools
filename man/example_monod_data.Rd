@@ -15,7 +15,7 @@ A data frame with 40 rows and 2 variables:
 Elena Litchman, Allyson Hutchins, Tatiana Severin, W.K. Kellogg Biological Station, Michigan State University
 }
 \usage{
-example_monod_data
+data(example_monod_data)
 }
 \description{
 A data set containing estimated growth rates of one phytoplankton isolate across a range

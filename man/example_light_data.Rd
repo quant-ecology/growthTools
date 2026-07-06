@@ -16,7 +16,7 @@ A data frame with 36 rows and 3 variables:
 Sam Fey, Tamara Layden, Reed College
 }
 \usage{
-example_light_data
+data(example_light_data)
 }
 \description{
 A data set containing estimated growth rates of one phytoplankton isolate across a range

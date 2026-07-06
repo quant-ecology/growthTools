@@ -4,7 +4,7 @@
 \alias{nobs.mle2}
 \title{Extract number of observations from mle2 object}
 \usage{
-nobs.mle2(object)
+\method{nobs}{mle2}(object)
 }
 \description{
 By default, mle2 objects from bbmle produced by fitting a model to data without

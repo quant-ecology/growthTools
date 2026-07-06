@@ -32,7 +32,7 @@ A data frame with 46046 rows and 19 variables:
 Elena Litchman and Tatiana Severin, W.K. Kellogg Biological Station, Michigan State University
 }
 \usage{
-abundance
+data(abundance)
 }
 \description{
 A data set tracking the abundances of experimental phytoplankton populations over time. Fluorescence 

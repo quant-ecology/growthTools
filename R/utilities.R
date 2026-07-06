@@ -100,6 +100,7 @@ fd2.central<-function(fx,h){
 #' do not provide the number of observations underlying the fit. This extends the 
 #' nobs() generic with a specific method for mle2 objects.
 #' 
+#' @export
 nobs.mle2<-function(object){
   length(object@data[[1]])
 }

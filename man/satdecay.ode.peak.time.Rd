@@ -4,12 +4,10 @@
 \alias{satdecay.ode.peak.time}
 \title{Estimate timing of peak abundance (satdecay ODE model)}
 \usage{
-satdecay.ode.peak.time(cfs, r0 = r0.global, tmax = 100)
+satdecay.ode.peak.time(cfs, tmax = 100)
 }
 \arguments{
 \item{cfs}{Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()}
-
-\item{r0}{Initial resource concentration (set arbitrarily to r0.global by default)}
 
 \item{tmax}{Maximum of time domain}
 }
