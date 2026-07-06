@@ -154,11 +154,10 @@ satdecay.ode <- function(x, alpha, vmax, cpar, dpar, r0, n0,return.r=FALSE) {
 #' methods in Julia to calculate the timing of peak ln(abundance).
 #' 
 #' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()
-#' @param r0 Initial resource concentration (set arbitrarily to r0.global by default)
 #' @param tmax Maximum of time domain
 #' 
 #' @export
-satdecay.ode.peak.time <- function(cfs, r0=r0.global, tmax=100){
+satdecay.ode.peak.time <- function(cfs, tmax=100){
   # make sure Julia is accessible
   ensure_julia()
   if (!requireNamespace("JuliaCall", quietly = TRUE)) {
@@ -166,7 +165,7 @@ satdecay.ode.peak.time <- function(cfs, r0=r0.global, tmax=100){
   }
   
   JuliaCall::julia_assign("p_new", c(cfs$alpha, cfs$vmax, cfs$c, cfs$d))
-  JuliaCall::julia_assign("u0_new", c(r0, cfs$n0))
+  JuliaCall::julia_assign("u0_new", c(cfs$r0, cfs$n0))
   JuliaCall::julia_assign("tmax_local", tmax)
 
   JuliaCall::julia_eval("tspan_new = (0, tmax_local); times = vec(collect(times)); prob = SciMLBase.ODEProblem(f!,u0_new,tspan_new,p_new); sol = solve(prob, Tsit5(), saveat=0.01,reltol=1e-8,abstol=1e-8,save_everystep=false); rvals = [u[1] for u in sol.u]; thresh = p_new[4] / (1 - p_new[4]); idx = findfirst(x -> x <= thresh, rvals); idx === nothing ? NaN : sol.t[idx];")
@@ -179,19 +178,18 @@ satdecay.ode.peak.time <- function(cfs, r0=r0.global, tmax=100){
 #' Given a set of estimated coefficients for a satdecay ODE model, use numerical
 #' methods in Julia to calculate additional values of interest, including peak ln(abundance).
 #' 
-#' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode()
-#' @param r0 Initial resource concentration (set arbitrarily to r0.global by default)
+#' @param cfs Coefficients of satdecay ODE model, e.g. from get.gr.satdecay.ode(), including r0
 #' 
 #' @return List containing tmax (timing of peak abundance) and nmax (ln(abundance) at tmax)
 #' 
 #' @export
-derive.satdecay.stats <- function(cfs, r0=r0.global){
+derive.satdecay.stats <- function(cfs){
   
   # recall, tmax may be returned as NaN if no internal tmax is identified.
   tmax <- satdecay.ode.peak.time(cfs)
 
   if(!is.nan(tmax)){
-    nmax <- satdecay.ode(tmax,cfs$alpha,cfs$vmax,cfs$c,cfs$d,r0 = r0,n0 = cfs$n0)    
+    nmax <- satdecay.ode(tmax,cfs$alpha,cfs$vmax,cfs$c,cfs$d,cfs$r0,cfs$n0)    
   }else{
     nmax <- NA
   }
@@ -390,13 +388,7 @@ get.gr.satdecay.ode<-function(x,y){
   fit_late <- lm(y[(length(x)-2):length(x)] ~ x[(length(x)-2):length(x)])
   slope_end <- coef(fit_late)[2]
   
-  vmax.guess <- slope0 - slope_end
-  alpha.guess <- 0.1 * vmax.guess # careful with this one; linked to r0 assumption
-  c.guess <- 0.2
-  d.guess    <- -slope_end / vmax.guess
-  #n0.guess <- y[which.min(x)]
-  n0.guess <- coef(fit_early)[1] # use y-intercept of initial linear slope instead?
-  #print(c(alpha.guess,vmax.guess,c.guess,d.guess,n0.guess))
+  r0.guess <- r0.global
   
   # if d guess is negative/zero, linear approx may be thrown off by few/noisy
   # values at the end of the time series. Assuming there's enough data, expand
@@ -406,6 +398,26 @@ get.gr.satdecay.ode<-function(x,y){
     slope_end <- coef(fit_late)[2]
     d.guess    <- -slope_end / vmax.guess
   }
+  
+    vmax.guess <- slope0 - slope_end # this ends up negative when initial pop declines
+    #alpha.guess <- 1 * vmax.guess # careful with this one; linked to r0 assumption; 
+    # seems like it needs to increase as r0 increases, with scalar = r0/100
+    alpha.guess <- (r0.guess/100) * vmax.guess # careful with this one; linked to r0 assumption; 
+    c.guess <- 0.2
+    d.guess    <- -slope_end / vmax.guess
+    #n0.guess <- y[which.min(x)]
+    n0.guess <- coef(fit_early)[1] # use y-intercept of initial linear slope instead?
+    #print(c(alpha.guess,vmax.guess,c.guess,d.guess,n0.guess))
+  }else{
+    print("Caution: code not fully tested for satdecayode with strong initial decay");
+    vmax.guess <- 1
+    alpha.guess <- 1
+    c.guess <- 0.2
+    d.guess    <- -slope0
+    n0.guess <- 6 #coef(fit_early)[1]
+  }
+  
+
   
   # set up for likelihood calculation:
   JuliaCall::julia_assign("times_obs", x)
@@ -426,14 +438,14 @@ get.gr.satdecay.ode<-function(x,y){
     return(vals)
   }
   
-  negloglik <- function(log_alpha, log_vmax, theta_c,log_d, n0, log_sigma){
+  negloglik <- function(log_alpha, log_vmax, theta_c, log_d, log_r0, n0, log_sigma){
     
     alpha <- exp(log_alpha)
     vmax  <- exp(log_vmax)
     cpar  <- 1 / (1 + exp(-theta_c))
     dpar  <- exp(log_d)
     sigma <- exp(log_sigma)
-    r0 <- r0.global # fixed arbitrarily
+    r0 <- exp(log_r0)
     
     nvals <- satdecay.ode.local(x, alpha, vmax, cpar, dpar, r0, n0)
     
@@ -450,6 +462,7 @@ get.gr.satdecay.ode<-function(x,y){
       log_vmax  = log(vmax.guess),
       theta_c   = qlogis(0.2),
       log_d     = log(d.guess),
+      log_r0 = log(r0.guess),
       n0   = n0.guess,
       log_sigma = log(0.1)
     ),
