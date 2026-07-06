@@ -399,6 +399,7 @@ get.gr.satdecay.ode<-function(x,y){
     d.guess    <- -slope_end / vmax.guess
   }
   
+  if(slope0 > 0){
     vmax.guess <- slope0 - slope_end # this ends up negative when initial pop declines
     #alpha.guess <- 1 * vmax.guess # careful with this one; linked to r0 assumption; 
     # seems like it needs to increase as r0 increases, with scalar = r0/100
