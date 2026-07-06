@@ -825,7 +825,7 @@ glance.growth_rate_result <- function(object, ...) {
   )
 }
 
-#' Augment method for growth model fit
+#' Augment method for single growth model fit
 #' 
 #' Provides observation-level predictions and residuals based on a model fit
 #' 
@@ -840,6 +840,41 @@ augment.growth_fit <- function(object, ...) {
     y = object$data$y,
     fitted = object$results$preds,
     residual = object$data$y - object$results$preds
+  )
+}
+
+#' Glance method for single growth model fit
+#' 
+#' Provides observation-level predictions and residuals based on a model fit
+#' 
+#' @param object Object of class growth_fit
+#' @param \dots Additional arguments (not used)
+#'
+#' @export
+glance.growth_fit <- function(x, ...) {
+  
+  # if model failed, return NA-safe structure
+  if (is.null(x$results)) {
+    return(tibble::tibble(
+      model = x$model$name,
+      slope = NA,
+      se = NA,
+      r2 = NA,
+      slope_r2 = NA,
+      nmax = NA,
+      tmax = NA,
+      decay_rate = NA
+    ))
+  }
+  
+  tibble::tibble(
+    model = x$model$name,
+    slope = x$results$metrics$slope,
+    se = x$results$metrics$se,
+    slope_r2 = x$results$metrics$slope_r2,
+    nmax = x$results$metrics$nmax,
+    tmax = x$results$metrics$tmax,
+    decay_rate = x$results$metrics$decay_rate
   )
 }
 
